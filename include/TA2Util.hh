@@ -21,27 +21,6 @@ namespace tau
         int nsteps;
     };
     
-    class Job
-    {
-        public:
-            Job(ThreeVector x0i, ThreeVector v0i);
-            std::vector<std::pair<ThreeVector, ThreeVector> >* Run();
-        private:
-            ThreeVector x0;
-            ThreeVector v0;
-    };
-    
-    class Queue
-    {
-        public:
-            Queue();
-            void AddJob(Job);
-            Job GetJob();
-            size_t GetSize(){return jobs.size();}
-        private:
-            std::vector<Job> jobs;
-    };
-    
     void* producer(void* arg);
     void* consumer(void* arg);
         

@@ -32,7 +32,10 @@ int main(int argc, char* argv[])
         tau::TAargs args;
         args.sequence = config.GetMagnets();
         args.limits = config.GetLimits();
-        args.phasespace = config.GetPhaseSpace();
+        if(args.UsePhasespace)
+        {
+            args.phasespace = config.GetPhaseSpace();
+        }
         args.step = config.GetStep();
         args.nsteps = config.GetNsteps();// Build the args struct from the config object
 

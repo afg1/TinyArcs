@@ -176,6 +176,7 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                 y = static_cast<long double>(atof(linesplit[2].c_str()));
                 z = static_cast<long double>(atof(linesplit[3].c_str()));
                 xi = new ThreeVector(x,y,z);
+                configPhaseSpacexi->push_back(*xi);
             }
             else if(linesplit[0].compare("VI") == 0)
             {
@@ -184,6 +185,7 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                 y = static_cast<long double>(atof(linesplit[2].c_str()));
                 z = static_cast<long double>(atof(linesplit[3].c_str()));
                 vi = new ThreeVector(x,y,z);
+                configPhaseSpacevi->push_back(*vi);
             }
             else
             {
@@ -193,5 +195,9 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
     }// Close config read
     config.close();
 }
-    
+
+
+TAPhasespace TA2ConfigParser::GetPhaseSpaceFromFile()
+{
+    if(
 

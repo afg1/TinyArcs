@@ -5,6 +5,7 @@
 
 
 #include "ThreeVector.hh"
+#include "TAPhasespace.hh"
 #include "Magnets.hh"
 
 class TA2ConfigParser
@@ -13,7 +14,7 @@ class TA2ConfigParser
         TA2ConfigParser(const char* fname);
         long double GetStep(){return step;}
         unsigned int GetNsteps(){return nsteps;}
-        std::string GetPhaseSpace(){return phasespace;}
+        TAPhasespace GetPhaseSpaceFromFile();
         ThreeVector& GetLimits(){return *limits;}
         std::vector<magnet*> GetMagnets(){return magnets;}
 
@@ -33,15 +34,18 @@ class TA2ConfigParser
         // Global options for the algorithm
         long double step;
         int nsteps;
-        std::string phasespace;
+        TAPhasespace phasespace;
         bool suppress_output;
         ThreeVector* limits;
         ThreeVector* xi;
         ThreeVector* vi;
+        std::vector<ThreeVector>* configPhaseSpacexi;
+        std::vector<ThreeVector>* configPhaseSpacevi;
         std::vector<magnet*> magnets;
     
         // Constants and things
         bool configGood;
+        bool UsePhasespace
         long double pi;
 
 
