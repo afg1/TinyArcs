@@ -16,7 +16,7 @@ namespace tau
     {
         std::vector<magnet*> sequence;
         ThreeVector limits;
-        std::string phasespace;
+        TAPhasespace* phasespace;
         long double step;
         int nsteps;
     };

@@ -8,7 +8,8 @@
 class TAPhasespace
 {
     public:
-        TAPhasespace(char* );
+        TAPhasespace(){}
+        TAPhasespace(std::string);
         ~TAPhasespace();
         std::pair<ThreeVector, ThreeVector> GetParticle();
     private:

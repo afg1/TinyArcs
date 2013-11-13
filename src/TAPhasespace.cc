@@ -1,9 +1,9 @@
 #include "TAPhasespace.hh"
 #include "ThreeVector.hh"
 
-TAPhasespace::TAPhasespace(char* filename)
+TAPhasespace::TAPhasespace(std::string filename)
 {
-    std::ifstream phase(filename, ios::binary);
+    std::ifstream phase(filename.c_str(), ios::binary);
     if(phase.is_open())
     {
         phase.seekg(0, std::ios::end);

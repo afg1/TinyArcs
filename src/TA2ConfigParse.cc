@@ -147,7 +147,7 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
             }// End Spectrometer (Shull-Dennison)
             else if(linesplit[0].compare("PHASESPACE") == 0)
             {
-                phasespace = linesplit[1];// This is all we will do with it now, read in later...
+                phasespace = new TAPhasespace(linesplit[1]);// This is all we will do with it now, read in later...
             }
             else if(linesplit[0].compare("STEP") == 0)
             {
@@ -196,8 +196,23 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
     config.close();
 }
 
-
-TAPhasespace TA2ConfigParser::GetPhaseSpaceFromFile()
+std::pair<ThreeVector, ThreeVector> TA2ConfigParser::GetParticle()
 {
-    if(
+    if(usePhasespace)
+    {
+        return phasespace->GetParticle();
+    }
+    else if(configPhaseSpacexi->size() > 0)
+    {
+        std::pair<ThreeVector, ThreeVector> rval;
+        rval = std::make_pair(configPhaseSpacexi->operator[](0), configPhaseSpacevi->operator[](0));
+        configPhaseSpacexi->erase(configPhaseSpacexi->begin());
+        configPhaseSpacevi->erase(configPhaseSpacevi->begin());
+        return rval;
+    }
+    std::cerr << "Something went wrong... Returning garbage" << std::endl;
+    ThreeVector v0f;
+    ThreeVector x0f;
+    return std::make_pair(x0f, v0f);
+}
 

@@ -29,19 +29,7 @@ int main(int argc, char* argv[])
     else if(argc == 2)// Everything now has to go within this if statement
     {
         TA2ConfigParser config(argv[1]);
-        tau::TAargs args;
-        args.sequence = config.GetMagnets();
-        args.limits = config.GetLimits();
-        if(args.UsePhasespace)
-        {
-            args.phasespace = config.GetPhaseSpace();
-        }
-        args.step = config.GetStep();
-        args.nsteps = config.GetNsteps();// Build the args struct from the config object
-
-        vector<pair<ThreeVector, ThreeVector> > res;
-        tau::RunTracking(args, &res);
-        
+               
     }
     else
     {
