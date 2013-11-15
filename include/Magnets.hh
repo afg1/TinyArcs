@@ -8,8 +8,8 @@
 class magnet
 {
     public:
-        virtual ThreeVector* B(ThreeVector* point)=0;
-        virtual bool InMagnet(ThreeVector* point)=0;
+        virtual ThreeVector B(ThreeVector point)=0;
+        virtual bool InMagnet(ThreeVector point)=0;
         virtual ThreeVector* GetNormal()=0;
         virtual ThreeVector* GetPlanePoint()=0;
         virtual long double GetEndA()=0;
@@ -22,11 +22,11 @@ class HardEdgedArcDipole : public magnet
     public:
         HardEdgedArcDipole(std::string , long double , long double, long double, long double, long double, ThreeVector*, ThreeVector*);
         ~HardEdgedArcDipole();
-        virtual ThreeVector* B(ThreeVector* point);
+        virtual ThreeVector B(ThreeVector point);
         ThreeVector* GetNormal(){return exit_normal;}
         ThreeVector* GetPlanePoint(){return exit_plane_point;}
         long double GetEndA(){return endA;}
-        bool InMagnet(ThreeVector* point);
+        bool InMagnet(ThreeVector point);
     
     private:
         long double innerR;
@@ -51,11 +51,11 @@ class HardEdged225Spectrometer : public magnet
         HardEdged225Spectrometer(std::string , long double , long double, long double, long double, long double, ThreeVector*, ThreeVector*, long double, long double);
         ~HardEdged225Spectrometer();
         long double Hr(long double rp, long double z);
-        virtual ThreeVector* B(ThreeVector* point);
+        virtual ThreeVector B(ThreeVector point);
         ThreeVector* GetNormal(){return exit_normal;}
         ThreeVector* GetPlanePoint(){return exit_plane_point;}
         long double GetEndA(){return endA;}
-        bool InMagnet(ThreeVector* point);
+        bool InMagnet(ThreeVector point);
     
     private:
         long double innerR;

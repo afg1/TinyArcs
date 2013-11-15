@@ -13,6 +13,7 @@ class ThreeVector
 
         ThreeVector Cross(ThreeVector&);
         long double Dot(ThreeVector&);
+        
         long double GetElem(int) const;
         void SetElem(int, long double);
         void SetAll(long double val)
@@ -27,7 +28,7 @@ class ThreeVector
     
         // Overload a whole bunch of operators!
         friend std::ostream& operator<<(std::ostream &os, const ThreeVector& v);//
-        ThreeVector& operator=(ThreeVector& rhs);// done?
+        ThreeVector& operator=(const ThreeVector& rhs);// done?
         bool operator==(const ThreeVector& rhs) const;//done?
         ThreeVector& operator+=(const ThreeVector& rhs);//
         ThreeVector& operator-=(const ThreeVector& rhs);//
@@ -35,8 +36,8 @@ class ThreeVector
         ThreeVector& operator/=(const long double rhs);// All done?
         friend ThreeVector& operator+(ThreeVector lhs, const ThreeVector& rhs);//
         friend ThreeVector& operator-(ThreeVector lhs, const ThreeVector& rhs);//done?
-        ThreeVector& operator*(long double rhs);//
-        ThreeVector& operator/(long double rhs);//
+        friend ThreeVector& operator*(ThreeVector lhs, long double rhs);//
+        friend ThreeVector& operator/(ThreeVector lhs,long double rhs);//
     
         void swap(ThreeVector& first, ThreeVector& second);// done?
     

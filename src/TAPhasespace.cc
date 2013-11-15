@@ -1,9 +1,11 @@
 #include "TAPhasespace.hh"
 #include "ThreeVector.hh"
 
+#include <fstream>
+
 TAPhasespace::TAPhasespace(std::string filename)
 {
-    std::ifstream phase(filename.c_str(), ios::binary);
+    std::ifstream phase(filename.c_str(), std::ios::binary);
     if(phase.is_open())
     {
         phase.seekg(0, std::ios::end);
@@ -11,7 +13,6 @@ TAPhasespace::TAPhasespace(std::string filename)
         position = 0;
         phase.close();
         fname = filename;
-    
     }
     else
     {
@@ -23,9 +24,16 @@ TAPhasespace::~TAPhasespace()
 {
 }
 
-std::pair<ThreeVector, ThreeVector> GetParticle()
+int TAPhasespace::GetNpart()
 {
-    std::ifstream phase(fname.c_str());
+    
+    return (len/(6*sizeof(long double)));
+}
+
+std::pair<ThreeVector, ThreeVector> TAPhasespace::GetParticle()
+{
+    long double tx(0), ty(0), tz(0);
+    std::ifstream phase(fname.c_str(), std::ios::binary);
     if(phase.is_open())
     {
         char* buffer = new char[6*sizeof(long double)];// buffer for a set of threads worth of particles!
@@ -54,13 +62,13 @@ std::pair<ThreeVector, ThreeVector> GetParticle()
             return std::make_pair(x0, v0);
             
         }
-        else
-        {
-            ThreeVector v0f;
-            ThreeVector x0f;
-            std::cerr << "Failed to open phase space!" << std::endl;
-            return std::make_pair(x0f, v0f);
-        }
+    }
+    else
+    {
+        ThreeVector v0f;
+        ThreeVector x0f;
+        std::cerr << "Failed to open phase space!" << std::endl;
+        return std::make_pair(x0f, v0f);
     }
     std::cerr << "Something went wrong... Returning garbage" << std::endl;
     ThreeVector v0f;

@@ -18,7 +18,7 @@ class TA2ConfigParser
         std::vector<magnet*> GetMagnets(){return magnets;}
         TAPhasespace* GetPhaseSpace(){return phasespace;}
         std::pair<ThreeVector, ThreeVector> GetParticle();
-
+        int GetNpart();
     
     private:
         // Things needed to construct a magnet
@@ -40,8 +40,8 @@ class TA2ConfigParser
         ThreeVector* limits;
         ThreeVector* xi;
         ThreeVector* vi;
-        std::vector<ThreeVector>* configPhaseSpacexi;
-        std::vector<ThreeVector>* configPhaseSpacevi;
+        std::vector<ThreeVector> configPhaseSpacexi;
+        std::vector<ThreeVector> configPhaseSpacevi;
         std::vector<magnet*> magnets;
     
         // Constants and things

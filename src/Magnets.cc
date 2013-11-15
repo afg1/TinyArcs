@@ -32,11 +32,11 @@ HardEdgedArcDipole::~HardEdgedArcDipole()
     delete exit_plane_point;
 }
 
-bool HardEdgedArcDipole::InMagnet(ThreeVector* point)
+bool HardEdgedArcDipole::InMagnet(ThreeVector point)
 {
-    long double theta = std::atan2(point->GetElem(0), point->GetElem(1)) + M_PI/2;// By trial and error, this ends up right
-    long double rp = std::sqrt(std::pow(point->GetElem(0), 2) + std::pow(point->GetElem(1), 2));
-    long double z = point->GetElem(2);
+    long double theta = std::atan2(point.GetElem(0), point.GetElem(1)) + pi;// By trial and error, this ends up right
+    long double rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
+    long double z = point.GetElem(2);
     
     if((z <= gap/2 && z >= -gap/2) && ((theta >= startA && theta <= endA) || (theta <= startA && theta >= endA)) && (rp >= innerR && rp <= outerR))
     {
@@ -48,19 +48,19 @@ bool HardEdgedArcDipole::InMagnet(ThreeVector* point)
     }
 }
 
-ThreeVector* HardEdgedArcDipole::B(ThreeVector* point)
+ThreeVector HardEdgedArcDipole::B(ThreeVector point)
 {
-    long double theta = std::atan2(point->GetElem(0), point->GetElem(1)) + M_PI/2;// By trial and error, this ends up right
-    long double rp = std::sqrt(std::pow(point->GetElem(0), 2) + std::pow(point->GetElem(1), 2));
-    long double z = point->GetElem(2);
+    long double theta = std::atan2(point.GetElem(0), point.GetElem(1)) + pi;// By trial and error, this ends up right
+    long double rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
+    long double z = point.GetElem(2);
     
     if((z <= gap/2 && z >= -gap/2) && ((theta >= startA && theta <= endA) || (theta <= startA && theta >= endA)) && (rp >= innerR && rp <= outerR))
     {
-        return B0;
+        return *B0;
     }
     else
     {
-        ThreeVector* rval = new ThreeVector(0.0, 0.0, 0.0);//Initialise vector to 0 as well
+        ThreeVector rval(0.0, 0.0, 0.0);//Initialise vector to 0 as well
         return rval;
     }
 }
@@ -99,11 +99,11 @@ long double HardEdged225Spectrometer::Hr(long double rp, long double z)
     return rval;
 }
 
-bool HardEdged225Spectrometer::InMagnet(ThreeVector* point)
+bool HardEdged225Spectrometer::InMagnet(ThreeVector point)
 {
-    long double theta = std::atan2(point->GetElem(0), point->GetElem(1)) + M_PI/2;// By trial and error, this ends up right
-    long double rp = std::sqrt(std::pow(point->GetElem(0), 2) + std::pow(point->GetElem(1), 2));
-    long double z = point->GetElem(2);
+    long double theta = std::atan2(point.GetElem(0), point.GetElem(1)) + pi;// By trial and error, this ends up right
+    long double rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
+    long double z = point.GetElem(2);
     
     if((z <= gap/2 && z >= -gap/2) && ((theta >= startA && theta <= endA) || (theta <= startA && theta >= endA)) && (rp >= innerR && rp <= outerR))
     {
@@ -115,11 +115,11 @@ bool HardEdged225Spectrometer::InMagnet(ThreeVector* point)
     }
 }
 
-ThreeVector* HardEdged225Spectrometer::B(ThreeVector* point)
+ThreeVector HardEdged225Spectrometer::B(ThreeVector point)
 {
-    long double theta = std::atan2(point->GetElem(0), point->GetElem(1)) + M_PI/2;// By trial and error, this ends up right
-    long double rp = std::sqrt(std::pow(point->GetElem(0), 2) + std::pow(point->GetElem(1), 2));
-    long double z = point->GetElem(2);
+    long double theta = std::atan2(point.GetElem(0), point.GetElem(1)) + pi;// By trial and error, this ends up right
+    long double rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
+    long double z = point.GetElem(2);
     long double H0 = B0->GetElem(2);
     
     if((z <= gap/2 && z >= -gap/2) && ((theta >= startA && theta <= endA) || (theta <= startA && theta >= endA)) && (rp >= innerR && rp <= outerR))
@@ -131,12 +131,12 @@ ThreeVector* HardEdged225Spectrometer::B(ThreeVector* point)
         long double Hz3 = pow( (z/midR) ,2 )* beta * H0;
         
         long double Hz = H0 * rp - Hz1 + Hz2 - Hz3;
-        ThreeVector* rval = new ThreeVector(Hx, Hy, Hz);
+        ThreeVector rval(Hx, Hy, Hz);
         return rval;
     }
     else
     {
-        ThreeVector* rval = new ThreeVector(0.0, 0.0, 0.0);//Initialise vector to 0 as well
+        ThreeVector rval(0.0, 0.0, 0.0);//Initialise vector to 0 as well
         return rval;
     }
 }

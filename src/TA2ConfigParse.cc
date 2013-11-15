@@ -32,7 +32,6 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
             boost::split(linesplit, line, boost::is_any_of(", "));
             if(line.compare("DIPOLE") == 0)
             {
-                std::cout << "Standard Dipole" << std::endl;
                 while(std::getline(config, line) && line.compare("END") != 0)
                 {
                     std::vector<std::string> linesplit;
@@ -84,7 +83,6 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
             }// End Dipole
             else if(line.compare("255SPECTROMETER") == 0)
             {
-                std::cout << "Spectrometer using Shull-Dennison parameterisation" << std::endl;
                 while(std::getline(config, line) && line.compare("END") != 0)
                 {
                     std::vector<std::string> linesplit;
@@ -148,6 +146,7 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
             else if(linesplit[0].compare("PHASESPACE") == 0)
             {
                 phasespace = new TAPhasespace(linesplit[1]);// This is all we will do with it now, read in later...
+                usePhasespace = true;
             }
             else if(linesplit[0].compare("STEP") == 0)
             {
@@ -176,7 +175,7 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                 y = static_cast<long double>(atof(linesplit[2].c_str()));
                 z = static_cast<long double>(atof(linesplit[3].c_str()));
                 xi = new ThreeVector(x,y,z);
-                configPhaseSpacexi->push_back(*xi);
+                configPhaseSpacexi.push_back(*xi);
             }
             else if(linesplit[0].compare("VI") == 0)
             {
@@ -185,7 +184,7 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                 y = static_cast<long double>(atof(linesplit[2].c_str()));
                 z = static_cast<long double>(atof(linesplit[3].c_str()));
                 vi = new ThreeVector(x,y,z);
-                configPhaseSpacevi->push_back(*vi);
+                configPhaseSpacevi.push_back(*vi);
             }
             else
             {
@@ -202,12 +201,12 @@ std::pair<ThreeVector, ThreeVector> TA2ConfigParser::GetParticle()
     {
         return phasespace->GetParticle();
     }
-    else if(configPhaseSpacexi->size() > 0)
+    else if(configPhaseSpacexi.size() > 0)
     {
         std::pair<ThreeVector, ThreeVector> rval;
-        rval = std::make_pair(configPhaseSpacexi->operator[](0), configPhaseSpacevi->operator[](0));
-        configPhaseSpacexi->erase(configPhaseSpacexi->begin());
-        configPhaseSpacevi->erase(configPhaseSpacevi->begin());
+        rval = std::make_pair(configPhaseSpacexi[0], configPhaseSpacevi[0]);
+        configPhaseSpacexi.erase(configPhaseSpacexi.begin());
+        configPhaseSpacevi.erase(configPhaseSpacevi.begin());
         return rval;
     }
     std::cerr << "Something went wrong... Returning garbage" << std::endl;
@@ -216,3 +215,15 @@ std::pair<ThreeVector, ThreeVector> TA2ConfigParser::GetParticle()
     return std::make_pair(x0f, v0f);
 }
 
+
+int TA2ConfigParser::GetNpart()
+{
+    if(usePhasespace)
+    {
+        return phasespace->GetNpart();
+    }
+    else
+    {
+        return configPhaseSpacexi.size();
+    }
+}

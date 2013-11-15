@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 
+#include "ThreeVector.hh"
+
 class TAPhasespace
 {
     public:
@@ -12,8 +14,9 @@ class TAPhasespace
         TAPhasespace(std::string);
         ~TAPhasespace();
         std::pair<ThreeVector, ThreeVector> GetParticle();
+        int GetNpart();
     private:
-        size_t positon;
+        size_t position;
         size_t len;
         std::string fname;
     

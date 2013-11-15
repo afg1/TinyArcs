@@ -26,6 +26,13 @@ ThreeVector::ThreeVector(const ThreeVector& vec)
     {
         return;
     }
+    else if (elements.size() == 3)
+    {
+        for(int i=0; i<3; i++)
+        {
+            elements[i] = vec.GetElem(i);
+        }
+    }
     else
     {
         for(int i=0; i<3; i++)
@@ -37,7 +44,7 @@ ThreeVector::ThreeVector(const ThreeVector& vec)
 
 long double ThreeVector::GetElem(int i) const
 {
-    if(i < 3)
+    if(i < 3 && i >= 0)
     {
         return elements[i];
     }
@@ -73,21 +80,23 @@ long double ThreeVector::Magnitude()
     long double sum(0);
     for(int i=0; i<3; ++i)
     {
-        sum += elements[i];
+        sum += (elements[i]*elements[i]);
     }
     return sqrtl(sum);
 }
 
 ThreeVector ThreeVector::Normalise()
 {
-    if(Magnitude() != 0)
+    ThreeVector rval;
+    rval = *this;
+    if(rval.Magnitude() != 0)
     {
-        return *this /= Magnitude();
+        return rval /= Magnitude();
     }
     else
     {
         std::cerr << "WARNING: tried to normalise a vector with zero magnitude, returned the unaltered vector!" << std::endl;
-        return *this;
+        return rval;
     }
 }
 
@@ -95,7 +104,7 @@ ThreeVector ThreeVector::Normalise()
 
 std::ostream& operator<<(std::ostream& os, const ThreeVector& v)
 {
-  os << "(" << v.elements[0] << "\t" << v.elements[1] << "\t" << v.elements[2] << ")";
+  os << v.elements[0] << "\t" << v.elements[1] << "\t" << v.elements[2];
   return os;
 }
 
@@ -105,11 +114,14 @@ void ThreeVector::swap(ThreeVector& first, ThreeVector& second)
     swap(first.elements, second.elements);
 }
 
-ThreeVector& ThreeVector::operator=(ThreeVector& rhs)
+ThreeVector& ThreeVector::operator=(const ThreeVector& rhs)
 {
-    for(int i=0; i<3; ++i)
+    if(rhs.elements.size() == 3 && this->elements.size() == 3)
     {
-        this->elements[i] = rhs.elements[i];
+        for(int i=0; i<3; ++i)
+        {
+            this->elements[i] = rhs.elements[i];
+        }
     }
     return *this;
 }
@@ -178,14 +190,14 @@ ThreeVector& operator-(ThreeVector lhs, const ThreeVector& rhs)
     return lhs;
 }
 
-ThreeVector& ThreeVector::operator*(long double rhs)
+ThreeVector& operator*(ThreeVector lhs, long double rhs)
 {
-    *this *= rhs;
-    return *this;
+    lhs *= rhs;
+    return lhs;
 }
 
-ThreeVector& ThreeVector::operator/(long double rhs)
+ThreeVector& operator/(ThreeVector lhs, long double rhs)
 {
-    *this /= rhs;
-    return *this;
+    lhs /= rhs;
+    return lhs;
 }
