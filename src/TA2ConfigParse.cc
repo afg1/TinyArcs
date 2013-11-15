@@ -72,13 +72,17 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                         z = static_cast<long double>(atof(linesplit[3].c_str()));
                         B0 = new ThreeVector(x,y,z);
                     }
+                    else if(linesplit[0].compare("NAME") == 0)
+                    {
+                        name = linesplit[1];
+                    }
                     else
                     {
                        continue;
                     }
                     
                 }
-                magnet* dipole = new HardEdgedArcDipole("dipole", innerR, outerR, startA, endA, gap, B0, centre);
+                magnet* dipole = new HardEdgedArcDipole(name, innerR, outerR, startA, endA, gap, *B0, *centre);
                 magnets.push_back(dipole);
             }// End Dipole
             else if(line.compare("255SPECTROMETER") == 0)
@@ -134,13 +138,17 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                         z = static_cast<long double>(atof(linesplit[3].c_str()));
                         B0 = new ThreeVector(x,y,z);
                     }
+                    else if(linesplit[0].compare("NAME") == 0)
+                    {
+                        name = linesplit[1];
+                    }
                     else
                     {
                        continue;
                     }
                     
                 }
-                magnet* Shull_Dennison = new HardEdged225Spectrometer("Shull-Dennson", innerR, outerR, startA, endA, gap, B0, centre, alpha, betaDS);
+                magnet* Shull_Dennison = new HardEdged225Spectrometer(name, innerR, outerR, startA, endA, gap, *B0, *centre, alpha, betaDS);
                 magnets.push_back(Shull_Dennison);
             }// End Spectrometer (Shull-Dennison)
             else if(linesplit[0].compare("PHASESPACE") == 0)
@@ -155,6 +163,10 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
             else if(linesplit[0].compare("NSTEPS") == 0)
             {
                 nsteps = atoi(linesplit[1].c_str());
+            }
+            else if(linesplit[0].compare("NCORES") == 0)
+            {
+                ncores = atoi(linesplit[1].c_str());
             }
             else if(linesplit[0].compare("SUPPRESS") == 0)
             {

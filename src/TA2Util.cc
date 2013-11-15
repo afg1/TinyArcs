@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <cmath>
 #include <utility>
@@ -6,6 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <vector>
+#include <string>
+#include <sstream>
 
 
 #include <pthread.h>
@@ -53,38 +56,55 @@ This function will do the actual traking
 
 void tau::RunTracking(TA2ConfigParser* conf, std::vector<std::vector<std::pair<ThreeVector, ThreeVector> >* >& reslist)
 {
-    ApolloQueue queue(1);// Need to add an option for the number of cores to use really...
     
     const int npart = conf->GetNpart();
     pthread_t jobs[npart];// array of pthreads, which are what I'm calling "jobs"
     tau::ThreadArgs* t_args[npart];
     // Need to use struct to pass args into a pthread
     
-    pthread_mutex_lock(&threadWaitMutex);
     for(int i=0; i< npart; ++i)// this loop builds the job queue
     {
         t_args[i] = new ThreadArgs;
         t_args[i]->conf = conf;
         t_args[i]->res = reslist[i];
-        pthread_create(&jobs[i], NULL, tau::consumer, (void*)t_args[i]);
-        if(i == npart-1)
+    }
+    if(npart > conf->GetNcores())
+    {
+        for(int i=0; i<npart; i+=conf->GetNcores())
         {
-            queue.AddJob(jobs[i], true);
-        }
-        else
-        {
-            queue.AddJob(jobs[i], false);
+                for(int j=0; j< conf->GetNcores(); ++j)
+                {
+                    pthread_create(&jobs[i+j], NULL, tau::consumer, (void*)t_args[i+j]);
+                }
+                for(int j=0; j<conf->GetNcores(); ++j)
+                {
+                    pthread_join(jobs[i], NULL);
+                }
         }
     }
-    pthread_mutex_unlock(&threadWaitMutex);
-    queue.RunQueue();// This will essentialy join the jobs
-
-    for(int i=0; i< npart; ++i)// this loop builds the job queue
+    else
     {
+        for(int i=0; i< npart; ++i)// this loop builds the job queue
+        {
+            pthread_create(&jobs[i], NULL, tau::consumer, (void*)t_args[i]);
+        }
+        for(int i=0; i< npart; ++i)// this loop joins the treads
+        {
+            pthread_join(jobs[i], NULL);
+        }
+    }
+
+    std::stringstream fname;
+    for(int i=0; i< npart; ++i)
+    {
+        fname << "particle_" << i << ".txt";
+        std::ofstream out(fname.str().c_str());
         for(int j=0; j< t_args[i]->res->size() ; ++j)
         {
-            std::cout << t_args[i]->res->operator[](j).first << "\t" << t_args[i]->res->operator[](j).second << std::endl;
+            out << t_args[i]->res->operator[](j).first << "\t" << t_args[i]->res->operator[](j).second << std::endl;
         }
+        out.close();
+        fname.str("");
     }
 }
 
@@ -139,7 +159,6 @@ void tau::TrackingStep(tau::ThreadArgs* arg)
     long double MP(1.67262158E-27);
     long double g = gammaFromV(v0.Magnitude());
     
-//
     // Now we can do the tinyarcs method!
     long double dt = arg->conf->GetStep();
     
@@ -186,27 +205,38 @@ void tau::TrackingStep(tau::ThreadArgs* arg)
         normal = tau::GetNormal(x0, magnets);
         planePoint = tau::GetPlanePoint(x0, magnets);
     }
-    long double phi0 = theta = std::atan2(xr.GetElem(0), xr.GetElem(1)) + pi;// By trial and error, this ends up right
+    long double phi0 = theta = std::atan2(xr.GetElem(1), xr.GetElem(0));// By trial and error, this ends up right
+    if(phi0 < 0)
+    {
+        phi0 += 2*pi;
+    }
     long double thetat(theta);
     long double t0 = dt;
     long double t1(0);
     long double deltat(0);
-    if(phi0 + theta > endA)
-    {
-        do
-        {
-            long double topline = (xr - planePoint).Dot(normal);
-            long double bottom = (Fu*vperpMag * sin(thetat) + vperpu*(vperpMag * cos(thetat))).Dot(normal);
-            t1 = t0 - topline/bottom;
-            deltat = opline/bottom;
-            t0 = t1;
-            thetat = omega*deltat;
-            
-        }while( (dt + deltat) < 1E-5*dt && (dt - deltat) > 1E-5*dt);
-            
-    }
-//    std::cerr << vpar << "\t" << vperp << std::endl;
-    
+    int niter(0);
+    // Newton Raphston doesn't work yet...
+//    if(phi0 + theta > endA)
+//    {
+//        ThreeVector x1 = x0 + Fu*(r-r*cos(thetat)) + vperpu*(r*sin(thetat)) + vpar*t0;
+//        do
+//        {
+//            ThreeVector brackets = (x1 - planePoint);
+//            long double topline = brackets.Dot(normal);
+//            long double bottom = (Fu*vperpMag * sin(phi0+thetat) + vperpu*(vperpMag * cos(phi0+thetat))).Dot(normal);
+//            t1 = t0 - topline/bottom;
+//            deltat = topline/bottom;
+//            t0 = t1;
+//            thetat = omega*t0;
+//            niter++;
+//            std::cerr << deltat/dt << "\t" << dt << std::endl;
+//        }while(fabs(deltat/dt) > 10);
+//        
+//        std::pair<ThreeVector, ThreeVector> endpair(x1, vr);
+//        arg->initPair = endpair;
+//        arg->res->push_back(endpair);
+//        return;
+//    }
     std::pair<ThreeVector, ThreeVector> endpair(xr, vr);
     arg->initPair = endpair;
     arg->res->push_back(endpair);
@@ -227,6 +257,7 @@ long double tau::GetEndA(ThreeVector x, std::vector<magnet*> magnets)
             return (*curr)->GetEndA();
         }
     }
+    return 0;
 }
 
 ThreeVector tau::GetNormal(ThreeVector x, std::vector<magnet*> magnets)

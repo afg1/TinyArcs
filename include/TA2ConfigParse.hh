@@ -14,6 +14,7 @@ class TA2ConfigParser
         TA2ConfigParser(const char* fname);
         long double GetStep(){return step;}
         unsigned int GetNsteps(){return nsteps;}
+        int GetNcores(){return ncores;}
         ThreeVector& GetLimits(){return *limits;}
         std::vector<magnet*> GetMagnets(){return magnets;}
         TAPhasespace* GetPhaseSpace(){return phasespace;}
@@ -31,10 +32,12 @@ class TA2ConfigParser
         long double betaDS;
         ThreeVector* centre;
         ThreeVector* B0;
+        std::string name;
     
         // Global options for the algorithm
         long double step;
         int nsteps;
+        int ncores;
         TAPhasespace* phasespace;
         bool suppress_output;
         ThreeVector* limits;

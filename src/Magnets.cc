@@ -5,7 +5,7 @@
 
 #include "Magnets.hh"
 
-HardEdgedArcDipole::HardEdgedArcDipole(std::string namei, long double inner, long double outer, long double start, long double end, long double gapi, ThreeVector* Bvect, ThreeVector* cent)
+HardEdgedArcDipole::HardEdgedArcDipole(std::string namei, long double inner, long double outer, long double start, long double end, long double gapi, ThreeVector Bvect, ThreeVector cent)
 {
     pi = boost::math::constants::pi<long double>();
     B0 = Bvect;
@@ -20,21 +20,27 @@ HardEdgedArcDipole::HardEdgedArcDipole(std::string namei, long double inner, lon
     gap = gapi;
     
     
-     exit_normal = new ThreeVector(-sin(endA), cos(endA), 0);
-     exit_plane_point = new ThreeVector(midR*cos(endA), midR*sin(endA), gap/2);
+    
+     exit_normal.SetElem(0, sin(endA));
+     exit_normal.SetElem(1, cos(endA));
+     exit_normal.SetElem(2, 0.0);
+     exit_plane_point.SetElem(0,midR*cos(endA));
+     exit_plane_point.SetElem(1, midR*sin(endA));
+     exit_plane_point.SetElem(2, gap/2);
 }
 
 HardEdgedArcDipole::~HardEdgedArcDipole()
 {
-    delete B0;
-    delete centre;
-    delete exit_normal;
-    delete exit_plane_point;
+
 }
 
 bool HardEdgedArcDipole::InMagnet(ThreeVector point)
 {
-    long double theta = std::atan2(point.GetElem(0), point.GetElem(1)) + pi;// By trial and error, this ends up right
+    long double theta = std::atan2(point.GetElem(1), point.GetElem(0));
+    if(theta < 0)
+    {
+        theta += 2*pi;
+    }
     long double rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
     long double z = point.GetElem(2);
     
@@ -50,13 +56,17 @@ bool HardEdgedArcDipole::InMagnet(ThreeVector point)
 
 ThreeVector HardEdgedArcDipole::B(ThreeVector point)
 {
-    long double theta = std::atan2(point.GetElem(0), point.GetElem(1)) + pi;// By trial and error, this ends up right
+    long double theta = std::atan2(point.GetElem(1), point.GetElem(0));
+    if(theta < 0)
+    {
+        theta += 2*pi;
+    }
     long double rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
     long double z = point.GetElem(2);
     
     if((z <= gap/2 && z >= -gap/2) && ((theta >= startA && theta <= endA) || (theta <= startA && theta >= endA)) && (rp >= innerR && rp <= outerR))
     {
-        return *B0;
+        return B0;
     }
     else
     {
@@ -70,11 +80,12 @@ ThreeVector HardEdgedArcDipole::B(ThreeVector point)
 
 
 
-HardEdged225Spectrometer::HardEdged225Spectrometer(std::string namei, long double inner, long double outer, long double start, long double end, long double gapi, ThreeVector* Bvect, ThreeVector* cent, long double alph, long double bet)
+HardEdged225Spectrometer::HardEdged225Spectrometer(std::string namei, long double inner, long double outer, long double start, long double end, long double gapi, ThreeVector Bvect, ThreeVector cent, long double alph, long double bet)
 {
+    
     pi = boost::math::constants::pi<long double>();
-    B0 = new ThreeVector(*Bvect);
-    centre = new ThreeVector(*cent);
+    B0 = Bvect;
+    centre = cent;
     
     innerR = inner;
     outerR = outer;
@@ -87,21 +98,29 @@ HardEdged225Spectrometer::HardEdged225Spectrometer(std::string namei, long doubl
     beta= bet;
     
     
-     exit_normal = new ThreeVector(-sin(endA), cos(endA), 0);
-     exit_plane_point = new ThreeVector(midR*cos(endA), midR*sin(endA), gap/2);
+     exit_normal.SetElem(0, sin(endA));
+     exit_normal.SetElem(1, cos(endA));
+     exit_normal.SetElem(2, 0.0);
+     exit_plane_point.SetElem(0,midR*cos(endA));
+     exit_plane_point.SetElem(1, midR*sin(endA));
+     exit_plane_point.SetElem(2, gap/2);
 }
 
 long double HardEdged225Spectrometer::Hr(long double rp, long double z)
 {
     long double rval;
-    long double H0 = B0->GetElem(2);
+    long double H0 = B0.GetElem(2);
     rval = z * H0 * ( (2 * beta * (rp - midR) )/( pow(midR,2) ) - (alpha/midR));
     return rval;
 }
 
 bool HardEdged225Spectrometer::InMagnet(ThreeVector point)
 {
-    long double theta = std::atan2(point.GetElem(0), point.GetElem(1)) + pi;// By trial and error, this ends up right
+    long double theta = std::atan2(point.GetElem(1), point.GetElem(0));// By trial and error, this ends up right
+    if(theta < 0)
+    {
+        theta += 2*pi;
+    }
     long double rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
     long double z = point.GetElem(2);
     
@@ -117,10 +136,14 @@ bool HardEdged225Spectrometer::InMagnet(ThreeVector point)
 
 ThreeVector HardEdged225Spectrometer::B(ThreeVector point)
 {
-    long double theta = std::atan2(point.GetElem(0), point.GetElem(1)) + pi;// By trial and error, this ends up right
+    long double theta = std::atan2(point.GetElem(1), point.GetElem(0));// By trial and error, this ends up right
+    if(theta < 0)
+    {
+        theta += 2*pi;
+    }
     long double rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
     long double z = point.GetElem(2);
-    long double H0 = B0->GetElem(2);
+    long double H0 = B0.GetElem(2);
     
     if((z <= gap/2 && z >= -gap/2) && ((theta >= startA && theta <= endA) || (theta <= startA && theta >= endA)) && (rp >= innerR && rp <= outerR))
     {
