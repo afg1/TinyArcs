@@ -13,6 +13,10 @@ class magnet
         virtual ThreeVector GetNormal()=0;
         virtual ThreeVector GetPlanePoint()=0;
         virtual long double GetEndA()=0;
+        virtual long double GetStartA()=0;
+        // Note these two aren't virtual, all inheriting classes get them!
+        long double betaFromV(long double V);
+        long double gammaFromV(long double V);
 
 };
 
@@ -26,12 +30,14 @@ class HardEdgedArcDipole : public magnet
         ThreeVector GetNormal(){return exit_normal;}
         ThreeVector GetPlanePoint(){return exit_plane_point;}
         long double GetEndA(){return endA;}
+        long double GetStartA(){return startA;}
         bool InMagnet(ThreeVector point);
     
     private:
         long double innerR;
         long double outerR;
         long double midR;
+        long double R0;
         long double startA;
         long double endA;
         long double gap;
@@ -55,12 +61,14 @@ class HardEdged225Spectrometer : public magnet
         ThreeVector GetNormal(){return exit_normal;}
         ThreeVector GetPlanePoint(){return exit_plane_point;}
         long double GetEndA(){return endA;}
+        long double GetStartA(){return startA;}
         bool InMagnet(ThreeVector point);
     
     private:
         long double innerR;
         long double outerR;
         long double midR;
+        long double R0;
         long double startA;
         long double endA;
         long double gap;

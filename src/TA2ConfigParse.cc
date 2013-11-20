@@ -156,6 +156,11 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                 phasespace = new TAPhasespace(linesplit[1]);// This is all we will do with it now, read in later...
                 usePhasespace = true;
             }
+            else if(linesplit[0].compare("BMAP") == 0)
+            {
+                outloc = linesplit[1];
+                genBmap = true;
+            }
             else if(linesplit[0].compare("STEP") == 0)
             {
                 step = static_cast<long double>(atof(linesplit[1].c_str()));

@@ -18,6 +18,8 @@ namespace tau
         TA2ConfigParser* conf;
         std::vector<std::pair<ThreeVector, ThreeVector> >* res;
         std::pair<ThreeVector, ThreeVector> initPair;
+        bool lastStep;
+        bool firstStep;
         
     } ThreadArgs;
     
@@ -37,9 +39,12 @@ namespace tau
     long double betaFromV(long double V);
     ThreeVector GenerateBmap(ThreeVector x, std::vector<magnet*> magnets);
     long double GetEndA(ThreeVector x, std::vector<magnet*> magnets);
+    long double GetStartA(ThreeVector x, std::vector<magnet*> magnets);
     ThreeVector GetNormal(ThreeVector x, std::vector<magnet*> magnets);
     ThreeVector GetPlanePoint(ThreeVector x, std::vector<magnet*> magnets);
     bool GetInMagnet(ThreeVector x, std::vector<magnet*> magnets);
+    
+    void GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc);
 
 
     

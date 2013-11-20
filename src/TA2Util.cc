@@ -32,12 +32,11 @@ void *tau::consumer(void* arg)
 This function will do the actual traking
 */
     tau::ThreadArgs* input = (tau::ThreadArgs*)arg;
-    TA2ConfigParser* conf = input->conf;
-    
     pthread_mutex_lock(&getPartMutex);
+    TA2ConfigParser* conf = input->conf;
     input->initPair = conf->GetParticle();
     input->res->push_back(input->initPair);
-    int nsteps =conf->GetNsteps();
+    int nsteps = conf->GetNsteps();
     pthread_mutex_unlock(&getPartMutex);
     
     for(int n=0; n<nsteps; ++n)
@@ -67,19 +66,36 @@ void tau::RunTracking(TA2ConfigParser* conf, std::vector<std::vector<std::pair<T
         t_args[i] = new ThreadArgs;
         t_args[i]->conf = conf;
         t_args[i]->res = reslist[i];
+        t_args[i]->lastStep = false;
+        t_args[i]->firstStep = false;
+        
     }
     if(npart > conf->GetNcores())
     {
         for(int i=0; i<npart; i+=conf->GetNcores())
         {
+            if(npart - i > conf->GetNcores())
+            {
                 for(int j=0; j< conf->GetNcores(); ++j)
                 {
                     pthread_create(&jobs[i+j], NULL, tau::consumer, (void*)t_args[i+j]);
                 }
                 for(int j=0; j<conf->GetNcores(); ++j)
                 {
-                    pthread_join(jobs[i], NULL);
+                    pthread_join(jobs[i+j], NULL);
                 }
+            }
+            else
+            {
+                for(int j=0; j< (npart - i); ++j)
+                {
+                    pthread_create(&jobs[i+j], NULL, tau::consumer, (void*)t_args[i+j]);
+                }
+                for(int j=0; j<(npart - conf->GetNcores()); ++j)
+                {
+                    pthread_join(jobs[i+j], NULL);
+                }
+            }
         }
     }
     else
@@ -101,7 +117,7 @@ void tau::RunTracking(TA2ConfigParser* conf, std::vector<std::vector<std::pair<T
         std::ofstream out(fname.str().c_str());
         for(int j=0; j< t_args[i]->res->size() ; ++j)
         {
-            out << t_args[i]->res->operator[](j).first << "\t" << t_args[i]->res->operator[](j).second << std::endl;
+            out << std::setprecision(30) << t_args[i]->res->operator[](j).first << "\t" << t_args[i]->res->operator[](j).second << std::endl;
         }
         out.close();
         fname.str("");
@@ -196,16 +212,17 @@ void tau::TrackingStep(tau::ThreadArgs* arg)
     xr = x0 + Fu*(r-r*cos(theta)) + vperpu*(r*sin(theta)) + vpar*dt;// This should be the same as from the paper...
     vr = Fu*(r*omega*sin(theta)) + vperpu*(r*omega*cos(theta)) + vpar;
 
-    long double endA;
+    long double endA(0), startA(0);
     ThreeVector normal;
     ThreeVector planePoint;
     if(tau::GetInMagnet(x0, magnets))
     {
         endA = tau::GetEndA(x0, magnets);
+        startA = tau::GetStartA(x0, magnets);
         normal = tau::GetNormal(x0, magnets);
         planePoint = tau::GetPlanePoint(x0, magnets);
     }
-    long double phi0 = theta = std::atan2(xr.GetElem(1), xr.GetElem(0));// By trial and error, this ends up right
+    long double phi0 = std::atan2(x0.GetElem(1), x0.GetElem(0));// By trial and error, this ends up right
     if(phi0 < 0)
     {
         phi0 += 2*pi;
@@ -216,27 +233,55 @@ void tau::TrackingStep(tau::ThreadArgs* arg)
     long double deltat(0);
     int niter(0);
     // Newton Raphston doesn't work yet...
-//    if(phi0 + theta > endA)
-//    {
-//        ThreeVector x1 = x0 + Fu*(r-r*cos(thetat)) + vperpu*(r*sin(thetat)) + vpar*t0;
-//        do
-//        {
-//            ThreeVector brackets = (x1 - planePoint);
-//            long double topline = brackets.Dot(normal);
-//            long double bottom = (Fu*vperpMag * sin(phi0+thetat) + vperpu*(vperpMag * cos(phi0+thetat))).Dot(normal);
-//            t1 = t0 - topline/bottom;
-//            deltat = topline/bottom;
-//            t0 = t1;
-//            thetat = omega*t0;
-//            niter++;
-//            std::cerr << deltat/dt << "\t" << dt << std::endl;
-//        }while(fabs(deltat/dt) > 10);
-//        
-//        std::pair<ThreeVector, ThreeVector> endpair(x1, vr);
-//        arg->initPair = endpair;
-//        arg->res->push_back(endpair);
-//        return;
-//    }
+    if(phi0 + theta > endA  && !arg->lastStep)
+    {
+        ThreeVector x1 = x0 + Fu*(r-r*cos(thetat)) + vperpu*(r*sin(thetat)) + vpar*t0;
+        do
+        {
+            thetat = omega*t0;
+            x1 = x0 + Fu*(r-r*cos(thetat)) + vperpu*(r*sin(thetat)) + vpar*t0;
+            
+            ThreeVector brackets = (x1 - planePoint);
+            long double topline = brackets.Dot(normal);
+            ThreeVector bottomBrackets = Fu*vperpMag * sin(thetat) + vperpu*(vperpMag * cos(thetat));
+            long double bottom = bottomBrackets.Dot(normal);
+            t1 = t0 - topline/bottom;
+            deltat = topline/bottom;
+            t0 = t1;
+            niter++;
+//            std::cerr << topline << "\t" << bottom << "\t" << deltat/dt <<  std::endl;
+        }while(fabs(deltat/dt) > 1E-5);
+        arg->lastStep = true;
+        std::pair<ThreeVector, ThreeVector> endpair(x1, vr);
+        arg->initPair = endpair;
+        arg->res->push_back(endpair);
+        return;
+    }
+    else if(phi0 + theta < startA  && !arg->lastStep)
+    {
+        ThreeVector x1 = x0 + Fu*(r-r*cos(thetat)) + vperpu*(r*sin(thetat)) + vpar*t0;
+        do
+        {
+            thetat = omega*t0;
+            x1 = x0 + Fu*(r-r*cos(thetat)) + vperpu*(r*sin(thetat)) + vpar*t0;
+            
+            ThreeVector brackets = (x1 - planePoint);
+            long double topline = brackets.Dot(normal);
+            ThreeVector bottomBrackets = Fu*vperpMag * sin(thetat) + vperpu*(vperpMag * cos(thetat));
+            long double bottom = bottomBrackets.Dot(normal);
+            t1 = t0 - topline/bottom;
+            deltat = topline/bottom;
+            t0 = t1;
+            niter++;
+//            std::cerr << topline << "\t" << bottom << "\t" << deltat/dt <<  std::endl;
+        }while(fabs(deltat/dt) > 1E-5);
+        arg->lastStep = true;
+        std::pair<ThreeVector, ThreeVector> endpair(x1, vr);
+        arg->initPair = endpair;
+        arg->res->push_back(endpair);
+        return;
+    }
+
     std::pair<ThreeVector, ThreeVector> endpair(xr, vr);
     arg->initPair = endpair;
     arg->res->push_back(endpair);
@@ -255,6 +300,19 @@ long double tau::GetEndA(ThreeVector x, std::vector<magnet*> magnets)
         if((*curr)->InMagnet(x))
         {
             return (*curr)->GetEndA();
+        }
+    }
+    return 0;
+}
+
+long double tau::GetStartA(ThreeVector x, std::vector<magnet*> magnets)
+{
+        std::vector<magnet*>::iterator curr;
+    for(curr = magnets.begin(); curr != magnets.end(); ++curr)
+    {
+        if((*curr)->InMagnet(x))
+        {
+            return (*curr)->GetStartA();
         }
     }
     return 0;
@@ -298,5 +356,46 @@ bool tau::GetInMagnet(ThreeVector x, std::vector<magnet*> magnets)
     return false;
 }
 
-
+void tau::GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc)
+{
+    long double granular(0.1);
+    ThreeVector rp;
+    ThreeVector Bp;
+    long double xp(-limits.GetElem(0)), yp(-limits.GetElem(1)), zp(-limits.GetElem(2));
+    long double fieldPoint[4] = {0.0,0.0,0.0,0.0};
+    std::ofstream out;
+    out.open(outloc.c_str(), std::ios::binary);
+    if(out.is_open())
+    {
+        while(xp <= limits.GetElem(0))
+        {
+            while(yp <= limits.GetElem(1))
+            {
+                while(zp <= limits.GetElem(2))
+                {
+                    rp.SetElem(0, xp);
+                    rp.SetElem(1, yp);
+                    rp.SetElem(2, zp);
+                    
+                    Bp = tau::GenerateBmap(rp, magnets);
+                    fieldPoint[0] = xp;
+                    fieldPoint[1] = yp;
+                    fieldPoint[2] = zp;
+                    fieldPoint[3] = Bp.Magnitude();
+                    out.write((char*)&fieldPoint, sizeof(fieldPoint));
+                    zp += granular;
+                }
+                yp += granular;
+                zp = -limits.GetElem(2);
+            }
+            xp += granular;
+            yp = -limits.GetElem(1);
+        }
+    }
+    else
+    {
+        std::cerr << "Unable to open file for Bmap output" << std::endl;
+    }
+}
+    
 

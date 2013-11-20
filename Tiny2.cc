@@ -29,6 +29,11 @@ int main(int argc, char* argv[])
     else if(argc == 2)// Everything now has to go within this if statement
     {
         TA2ConfigParser config(argv[1]);
+        if(config.DoBmap())
+        {
+            tau::GenerateFieldMap(config.GetMagnets(), config.GetLimits(), config.GetBmapOutloc());
+            return 0;
+        }
         std::vector<std::pair<ThreeVector, ThreeVector> >* resn[config.GetNpart()];
         std::vector<std::vector<std::pair<ThreeVector, ThreeVector> >* > reslist;
         for(int i=0; i<config.GetNpart(); ++i)

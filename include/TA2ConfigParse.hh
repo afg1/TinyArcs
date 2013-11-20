@@ -18,6 +18,8 @@ class TA2ConfigParser
         ThreeVector& GetLimits(){return *limits;}
         std::vector<magnet*> GetMagnets(){return magnets;}
         TAPhasespace* GetPhaseSpace(){return phasespace;}
+        bool DoBmap(){return genBmap;}
+        std::string GetBmapOutloc(){return outloc;}
         std::pair<ThreeVector, ThreeVector> GetParticle();
         int GetNpart();
     
@@ -33,6 +35,7 @@ class TA2ConfigParser
         ThreeVector* centre;
         ThreeVector* B0;
         std::string name;
+    
     
         // Global options for the algorithm
         long double step;
@@ -50,7 +53,9 @@ class TA2ConfigParser
         // Constants and things
         bool configGood;
         bool usePhasespace;
+        bool genBmap;
         long double pi;
+        std::string outloc;
 
 
 
