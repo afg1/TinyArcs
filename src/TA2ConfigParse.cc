@@ -151,6 +151,50 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                 magnet* Shull_Dennison = new HardEdged225Spectrometer(name, innerR, outerR, startA, endA, gap, *B0, *centre, alpha, betaDS);
                 magnets.push_back(Shull_Dennison);
             }// End Spectrometer (Shull-Dennison)
+            else if(line.compare("GENFIELDMAP") == 0)
+            {
+                while(std::getline(config, line) && line.compare("END") != 0)
+                {
+                    std::vector<std::string> linesplit;
+                    boost::split(linesplit, line, boost::is_any_of(", "));
+                    
+                    if(linesplit[0].compare("EXTX") == 0)
+                    {
+                        extX = static_cast<long double>(atof(linesplit[1].c_str()));
+                    }
+                    else if(linesplit[0].compare("EXTY") == 0)
+                    {
+                        extY = static_cast<long double>(atof(linesplit[1].c_str()));
+                    }
+                    else if(linesplit[0].compare("EXTZ") == 0)
+                    {
+                        extZ = static_cast<long double>(atof(linesplit[1].c_str()));
+                    }
+                    else if(linesplit[0].compare("MAPFILE") == 0)
+                    {
+                        mapfile = linesplit[1];
+                    }
+                    else if(linesplit[0].compare("CENTRE") == 0)
+                    {
+                        long double x(0), y(0), z(0);
+                        x = static_cast<long double>(atof(linesplit[1].c_str()));
+                        y = static_cast<long double>(atof(linesplit[2].c_str()));
+                        z = static_cast<long double>(atof(linesplit[3].c_str()));
+                        centre = new ThreeVector(x,y,z);
+                    }
+                    else if(linesplit[0].compare("NAME") == 0)
+                    {
+                        name = linesplit[1];
+                    }
+                    else
+                    {
+                       continue;
+                    }
+                    
+                }
+                magnet* GenFieldMappd = new GeneralMagnetFromMap(name, extX, extY, extZ, *centre, mapfile);
+                magnets.push_back(GenFieldMappd);
+            }// End General field mapped element
             else if(linesplit[0].compare("PHASESPACE") == 0)
             {
                 phasespace = new TAPhasespace(linesplit[1]);// This is all we will do with it now, read in later...
@@ -159,6 +203,7 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
             else if(linesplit[0].compare("BMAP") == 0)
             {
                 outloc = linesplit[1];
+                granularity = static_cast<long double>(atof(linesplit[2].c_str()));
                 genBmap = true;
             }
             else if(linesplit[0].compare("STEP") == 0)

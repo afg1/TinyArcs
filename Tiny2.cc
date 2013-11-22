@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
         TA2ConfigParser config(argv[1]);
         if(config.DoBmap())
         {
-            tau::GenerateFieldMap(config.GetMagnets(), config.GetLimits(), config.GetBmapOutloc());
+            tau::GenerateFieldMap(config.GetMagnets(), config.GetLimits(), config.GetBmapOutloc(), config.GetGranularity());
             return 0;
         }
         std::vector<std::pair<ThreeVector, ThreeVector> >* resn[config.GetNpart()];

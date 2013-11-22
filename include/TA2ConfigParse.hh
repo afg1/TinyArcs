@@ -19,6 +19,7 @@ class TA2ConfigParser
         std::vector<magnet*> GetMagnets(){return magnets;}
         TAPhasespace* GetPhaseSpace(){return phasespace;}
         bool DoBmap(){return genBmap;}
+        long double GetGranularity(){return granularity;}
         std::string GetBmapOutloc(){return outloc;}
         std::pair<ThreeVector, ThreeVector> GetParticle();
         int GetNpart();
@@ -32,9 +33,15 @@ class TA2ConfigParser
         long double gap;
         long double alpha;
         long double betaDS;
+    
+        long double extX;
+        long double extY;
+        long double extZ;
+        std::string mapfile;
         ThreeVector* centre;
         ThreeVector* B0;
         std::string name;
+    
     
     
         // Global options for the algorithm
@@ -54,6 +61,7 @@ class TA2ConfigParser
         bool configGood;
         bool usePhasespace;
         bool genBmap;
+        long double granularity;
         long double pi;
         std::string outloc;
 

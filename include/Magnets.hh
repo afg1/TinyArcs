@@ -85,5 +85,84 @@ class HardEdged225Spectrometer : public magnet
     
 };
 
+class HardEdgedGeneralDipole : public magnet
+{
+    public:
+        HardEdgedGeneralDipole(std::string);
+        ~HardEdgedGeneralDipole();
+        ThreeVector B(ThreeVector point);
+    
+        bool InMagnet(ThreeVector point);
+        ThreeVector GetNormal();
+        ThreeVector GetPlanePoint();
+        long double GetEndA();
+        long double GetStartA();
+    
+    private:
+        long double innerR;
+        long double outerR;
+        long double startA;
+        long double endA;
+        long double entryPoleAngle;
+        long double exitPoleAngle;
+        long double gap;
+        std::string name;
+        ThreeVector B0;
+        ThreeVector centre;
+        ThreeVector exit_normal;
+        ThreeVector exit_plane_point;
+    
+        long double pi;
+};
+    
+class GeneralMagnetFromMap : public magnet
+{
+    public:
+        GeneralMagnetFromMap(std::string, long double, long double, long double, ThreeVector, std::string);
+        ~GeneralMagnetFromMap(){}
+    
+        ThreeVector B(ThreeVector point);
+        bool InMagnet(ThreeVector point);
+        ThreeVector GetNormal();
+        ThreeVector GetPlanePoint();
+        long double GetEndA();
+        long double GetStartA();
+    
+        long double LinearInterpolate(long double y0, long double y1, long double x0, long double x1, long double x);
+        ThreeVector TriLinearInterpolate(ThreeVector point);
+    
+    private:
+        long double extX;
+        long double extY;
+        long double extZ;
+        std::string name;
+        ThreeVector centre;
+    
+    
+    private:
+        static bool IsZero(ThreeVector i)
+        {
+            ThreeVector zero;
+            return i == zero;
+        }
+        std::vector<std::pair<ThreeVector, ThreeVector> > mapData;
+        long double minx;
+        long double maxx;
+        long double miny;
+        long double maxy;
+        long double minz;
+        long double maxz;
+        long double dx;
+        long double dy;
+        long double dz;
+        int nx;
+        int ny;
+        int nz;
+};
+
+
+
+
+
 
 #endif

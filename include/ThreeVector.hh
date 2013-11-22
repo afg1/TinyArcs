@@ -30,6 +30,12 @@ class ThreeVector
         friend std::ostream& operator<<(std::ostream &os, const ThreeVector& v);//
         ThreeVector& operator=(const ThreeVector& rhs);// done?
         bool operator==(const ThreeVector& rhs) const;//done?
+        bool operator!=(const ThreeVector& rhs) const;//
+        bool operator>(const ThreeVector& rhs) const;//
+        bool operator<(const ThreeVector& rhs) const;//
+        bool operator<=(const ThreeVector& rhs) const;//
+        bool operator>=(const ThreeVector& rhs) const;//All done! Note, these comparisons work on an element-by-element basis, not magnitude
+    
         ThreeVector& operator+=(const ThreeVector& rhs);//
         ThreeVector& operator-=(const ThreeVector& rhs);//
         ThreeVector& operator*=(const long double rhs);//

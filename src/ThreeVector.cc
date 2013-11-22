@@ -201,3 +201,48 @@ ThreeVector& operator/(ThreeVector lhs, long double rhs)
     lhs /= rhs;
     return lhs;
 }
+
+bool ThreeVector::operator!=(const ThreeVector& rhs) const
+{
+    return !operator==(rhs);
+}
+
+bool ThreeVector::operator>(const ThreeVector& rhs) const
+{
+    bool rval(true);
+    for(int i=0; i < elements.size(); ++i)
+    {
+        rval *= (elements[i] > rhs.GetElem(i));
+    }
+    return rval;
+}
+
+bool ThreeVector::operator<(const ThreeVector& rhs) const
+{
+    bool rval(true);
+    for(int i=0; i < elements.size(); ++i)
+    {
+        rval *= (elements[i] < rhs.GetElem(i));
+    }
+    return rval;
+}
+
+bool ThreeVector::operator<=(const ThreeVector& rhs) const
+{
+    bool rval(true);
+    for(int i=0; i < elements.size(); ++i)
+    {
+        rval *= (elements[i] <= rhs.GetElem(i));
+    }
+    return rval;
+}
+
+bool ThreeVector::operator>=(const ThreeVector& rhs) const
+{
+    bool rval(true);
+    for(int i=0; i < elements.size(); ++i)
+    {
+        rval *= (elements[i] >= rhs.GetElem(i));
+    }
+    return rval;
+}

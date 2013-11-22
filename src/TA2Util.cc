@@ -342,7 +342,6 @@ ThreeVector tau::GetPlanePoint(ThreeVector x, std::vector<magnet*> magnets)
     }
 }
 
-
 bool tau::GetInMagnet(ThreeVector x, std::vector<magnet*> magnets)
 {
     std::vector<magnet*>::iterator curr;
@@ -356,40 +355,35 @@ bool tau::GetInMagnet(ThreeVector x, std::vector<magnet*> magnets)
     return false;
 }
 
-void tau::GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc)
+void tau::GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc, long double granular)
 {
-    long double granular(0.1);
     ThreeVector rp;
-    ThreeVector Bp;
+    ThreeVector Bp(0.0, 0.0, 1.0);
     long double xp(-limits.GetElem(0)), yp(-limits.GetElem(1)), zp(-limits.GetElem(2));
-    long double fieldPoint[4] = {0.0,0.0,0.0,0.0};
+    double fieldPoint[6] = {0.0,0.0,0.0,0.0, 0.0, 0.0};
     std::ofstream out;
     out.open(outloc.c_str(), std::ios::binary);
     if(out.is_open())
     {
-        while(xp <= limits.GetElem(0))
+        for(xp=-1*limits.GetElem(0); xp <= limits.GetElem(0); xp+= granular)
         {
-            while(yp <= limits.GetElem(1))
+            for(yp=-1*limits.GetElem(1); yp <= limits.GetElem(1); yp+= granular)
             {
-                while(zp <= limits.GetElem(2))
+                for(zp=-1*limits.GetElem(2); zp <= limits.GetElem(2); zp+= granular)
                 {
                     rp.SetElem(0, xp);
                     rp.SetElem(1, yp);
                     rp.SetElem(2, zp);
-                    
                     Bp = tau::GenerateBmap(rp, magnets);
                     fieldPoint[0] = xp;
                     fieldPoint[1] = yp;
                     fieldPoint[2] = zp;
-                    fieldPoint[3] = Bp.Magnitude();
+                    fieldPoint[3] = Bp.GetElem(0);
+                    fieldPoint[4] = Bp.GetElem(1);
+                    fieldPoint[5] = Bp.GetElem(2);
                     out.write((char*)&fieldPoint, sizeof(fieldPoint));
-                    zp += granular;
                 }
-                yp += granular;
-                zp = -limits.GetElem(2);
             }
-            xp += granular;
-            yp = -limits.GetElem(1);
         }
     }
     else
