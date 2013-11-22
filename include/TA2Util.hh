@@ -43,6 +43,7 @@ namespace tau
     ThreeVector GetNormal(ThreeVector x, std::vector<magnet*> magnets);
     ThreeVector GetPlanePoint(ThreeVector x, std::vector<magnet*> magnets);
     bool GetInMagnet(ThreeVector x, std::vector<magnet*> magnets);
+    bool EligibleForNR(ThreeVector x, std::vector<magnet*> magnets);
     
     void GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc, long double granularity);
     

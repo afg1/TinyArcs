@@ -14,6 +14,7 @@ class magnet
         virtual ThreeVector GetPlanePoint()=0;
         virtual long double GetEndA()=0;
         virtual long double GetStartA()=0;
+        virtual bool Eligible()=0;
         // Note these two aren't virtual, all inheriting classes get them!
         long double betaFromV(long double V);
         long double gammaFromV(long double V);
@@ -32,6 +33,7 @@ class HardEdgedArcDipole : public magnet
         long double GetEndA(){return endA;}
         long double GetStartA(){return startA;}
         bool InMagnet(ThreeVector point);
+        bool Eligible(){return true;}
     
     private:
         long double innerR;
@@ -63,6 +65,7 @@ class HardEdged225Spectrometer : public magnet
         long double GetEndA(){return endA;}
         long double GetStartA(){return startA;}
         bool InMagnet(ThreeVector point);
+        bool Eligible(){return true;}
     
     private:
         long double innerR;
@@ -93,6 +96,7 @@ class HardEdgedGeneralDipole : public magnet
         ThreeVector B(ThreeVector point);
     
         bool InMagnet(ThreeVector point);
+        bool Eligible(){return true;}
         ThreeVector GetNormal();
         ThreeVector GetPlanePoint();
         long double GetEndA();
@@ -123,6 +127,7 @@ class GeneralMagnetFromMap : public magnet
     
         ThreeVector B(ThreeVector point);
         bool InMagnet(ThreeVector point);
+        bool Eligible(){return false;}
         ThreeVector GetNormal();
         ThreeVector GetPlanePoint();
         long double GetEndA();
@@ -145,6 +150,7 @@ class GeneralMagnetFromMap : public magnet
             ThreeVector zero;
             return i == zero;
         }
+        std::vector< std::vector< std::vector< std::pair< ThreeVector, ThreeVector> > > > mapDatatest;
         std::vector<std::pair<ThreeVector, ThreeVector> > mapData;
         long double minx;
         long double maxx;

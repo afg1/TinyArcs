@@ -203,7 +203,6 @@ GeneralMagnetFromMap::GeneralMagnetFromMap(std::string namei, long double extXi,
         map.seekg(0, std::ios::beg);
         char* buffer = new char[6*sizeof(double)];
         int offset(0);
-        std::cerr << len << std::endl;
         while(map.tellg() != len && map.tellg() != -1)
         {
             map.read(reinterpret_cast<char*>(buffer),6*sizeof(double));
@@ -224,7 +223,6 @@ GeneralMagnetFromMap::GeneralMagnetFromMap(std::string namei, long double extXi,
             offset+= sizeof(double);
             ThreeVector Bi(tx,ty,tz);
             mapData.push_back(std::make_pair(x, Bi));
-            std::cerr << Bi << std::endl;
         }
     }
     long double testx(mapData[0].first.GetElem(0));
@@ -287,9 +285,9 @@ GeneralMagnetFromMap::GeneralMagnetFromMap(std::string namei, long double extXi,
             maxz = curr->first.GetElem(2);
         }
         
-        nx = int((maxx - minx)/dx);
-        ny = int((maxy - miny)/dy);
-        nz = int((maxz - minz)/dz);
+        nx = int(ceil((maxx - minx)/dx)) + 1;
+        ny = int(ceil((maxy - miny)/dy)) + 1;
+        nz = int(ceil((maxz - minz)/dz)) + 1;
         
         
     }
@@ -299,7 +297,8 @@ GeneralMagnetFromMap::GeneralMagnetFromMap(std::string namei, long double extXi,
 
 ThreeVector GeneralMagnetFromMap::B(ThreeVector point)
 {
-    return TriLinearInterpolate(point);
+    ThreeVector rval = TriLinearInterpolate(point);
+    return rval;
 }
 bool GeneralMagnetFromMap::InMagnet(ThreeVector point)
 {
@@ -335,12 +334,23 @@ long double GeneralMagnetFromMap::GetStartA()
 
 long double GeneralMagnetFromMap::LinearInterpolate(long double y0, long double y1, long double x0, long double x1, long double x)
 {
-    return y0 + (y1 - y0)*(x - x0)/(x1 - x0);
+    if((x1 - x0) != 0.0)
+    {
+        long double rval = y0 + (y1 - y0)*(x - x0)/(x1 - x0);
+        return rval;
+    }
+    return 0.0;
 }
 
 
 ThreeVector GeneralMagnetFromMap::TriLinearInterpolate(ThreeVector point)
 {
+    if(!InMagnet(point))
+    {
+        ThreeVector rval(0.0,0.0,0.0);
+        return rval;
+    }
+
     std::vector<std::pair<ThreeVector, ThreeVector> > selected;
     long double bxtemp1(0), bxtemp2(0), bxtemp3(0), bxtemp4(0), bxtemp5(0), bxtemp6(0);
     long double bytemp1(0), bytemp2(0), bytemp3(0), bytemp4(0), bytemp5(0), bytemp6(0);
@@ -350,79 +360,67 @@ ThreeVector GeneralMagnetFromMap::TriLinearInterpolate(ThreeVector point)
     int ix(0), jy(0), kz(0);
 
     
-    ix = int((point.GetElem(0) - minx)/dx);
-    jy = int((point.GetElem(1) - miny)/dy);// Find the index of the lower corner of the voxel!
-    kz = int((point.GetElem(2) - minz)/dz);
+    ix = int(ceil((point.GetElem(0) - minx)/dx));
+    jy = int(ceil((point.GetElem(1) - miny)/dy));// Find the index of the lower corner of the voxel!
+    kz = int(ceil((point.GetElem(2) - minz)/dz));
 
-//    std::cerr << nx << "\t" << ny << "\t" << nz << std::endl;
-//    std::cerr << (ix+1)*nx + (jy+1)*ny + (kz+1) << std::endl;
-//    std::cerr << mapData.size() << std::endl;
-    selected.push_back(mapData[ix*nx + jy*ny + kz]);
-    selected.push_back(mapData[ix*nx + (jy+1)*ny + kz]);
-    selected.push_back(mapData[ix*nx + jy*ny + (kz+1)]);
-    selected.push_back(mapData[ix*nx + (jy+1)*ny + (kz+1)]);
-    
-    selected.push_back(mapData[(ix+1)*nx + jy*ny + kz]);
-    selected.push_back(mapData[(ix+1)*nx + (jy+1)*ny + kz]);
-    selected.push_back(mapData[(ix+1)*nx + jy*ny + (kz+1)]);
-    selected.push_back(mapData[(ix+1)*nx + (jy+1)*ny + (kz+1)]);// The order of these is very particular!
-    
-    std::vector<std::pair<ThreeVector, ThreeVector> >::iterator curr;
-    std::vector<ThreeVector> Btest;
-    ThreeVector zero;
-//    for(curr = selected.begin(); curr != selected.end(); ++curr)
-//    {
-//        Btest.push_back(curr->second);
-//        std::cerr << curr->second << std::endl;
-//    }
-//    if(std::all_of(Btest.begin(), Btest.end(), GeneralMagnetFromMap::IsZero) )// Everyting is zero, so return B= (0,0,0)
-//    {
-//        
-//        ThreeVector rval;
-//        return rval;
-//    }
-    
-    // Interpolate the B-vector in the x-direction...
-    bxtemp1 = LinearInterpolate(selected[0].second.GetElem(0), selected[4].second.GetElem(0), selected[0].first.GetElem(0), selected[4].first.GetElem(0), point.GetElem(0));
-    bxtemp2 = LinearInterpolate(selected[1].second.GetElem(0), selected[5].second.GetElem(0), selected[1].first.GetElem(0), selected[5].first.GetElem(0), point.GetElem(0));
-    bxtemp3 = LinearInterpolate(selected[2].second.GetElem(0), selected[6].second.GetElem(0), selected[2].first.GetElem(0), selected[6].first.GetElem(0), point.GetElem(0));
-    bxtemp4 = LinearInterpolate(selected[3].second.GetElem(0), selected[7].second.GetElem(0), selected[3].first.GetElem(0), selected[7].first.GetElem(0), point.GetElem(0));
-    // interpolate Bx in x
-    std::cerr << "x: " << bxtemp1 << "\t" << bxtemp2 << "\t" << bxtemp3 << "\t" << bxtemp4 << std::endl;
-    
-    bytemp1 = LinearInterpolate(selected[0].second.GetElem(1), selected[4].second.GetElem(1), selected[0].first.GetElem(0), selected[4].first.GetElem(0), point.GetElem(0));
-    bytemp2 = LinearInterpolate(selected[1].second.GetElem(1), selected[5].second.GetElem(1), selected[1].first.GetElem(0), selected[5].first.GetElem(0), point.GetElem(0));
-    bytemp3 = LinearInterpolate(selected[2].second.GetElem(1), selected[6].second.GetElem(1), selected[2].first.GetElem(0), selected[6].first.GetElem(0), point.GetElem(0));
-    bytemp4 = LinearInterpolate(selected[3].second.GetElem(1), selected[7].second.GetElem(1), selected[3].first.GetElem(0), selected[7].first.GetElem(0), point.GetElem(0));
-    //interpolate By in x
-    std::cerr << "y: " << bytemp1 << "\t" << bytemp2 << "\t" << bytemp3 << "\t" << bytemp4 << std::endl;
-    
-    bztemp1 = LinearInterpolate(selected[0].second.GetElem(2), selected[4].second.GetElem(2), selected[0].first.GetElem(0), selected[4].first.GetElem(0), point.GetElem(0));
-    bztemp2 = LinearInterpolate(selected[1].second.GetElem(2), selected[5].second.GetElem(2), selected[1].first.GetElem(0), selected[5].first.GetElem(0), point.GetElem(0));
-    bztemp3 = LinearInterpolate(selected[2].second.GetElem(2), selected[6].second.GetElem(2), selected[2].first.GetElem(0), selected[6].first.GetElem(0), point.GetElem(0));
-    bztemp4 = LinearInterpolate(selected[3].second.GetElem(2), selected[7].second.GetElem(2), selected[3].first.GetElem(0), selected[7].first.GetElem(0), point.GetElem(0));
-    // interpolate Bz in x
-    std::cerr << "z: " << bztemp1 << "\t" << bztemp2 << "\t" << bztemp3 << "\t" << bztemp4 << std::endl;
-    
-    // Now interpolate in the y-direction...
-    bxtemp5 = LinearInterpolate(bxtemp1, bxtemp2, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
-    bxtemp6 = LinearInterpolate(bxtemp3, bxtemp4, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
+    if(ix < nx-1)// Must have stepped outside the region we have a field map for... return zero
+    {
+        selected.push_back(mapData[ix*ny*nz + jy*nz + kz]);
+        selected.push_back(mapData[ix*ny*nz + (jy+1)*nz + kz]);
+        selected.push_back(mapData[ix*ny*nz + jy*nz + (kz+1)]);
+        selected.push_back(mapData[ix*ny*nz + (jy+1)*nz + (kz+1)]);
+        
+        selected.push_back(mapData[(ix+1)*ny*nz + jy*nz + kz]);
+        selected.push_back(mapData[(ix+1)*ny*nz + (jy+1)*nz + kz]);
+        selected.push_back(mapData[(ix+1)*ny*nz + jy*nz + (kz+1)]);
+        selected.push_back(mapData[(ix+1)*ny*nz + (jy+1)*nz + (kz+1)]);// The order of these is very particular!
+        
+        std::vector<std::pair<ThreeVector, ThreeVector> >::iterator curr;
+        std::vector<ThreeVector> Btest;
+        ThreeVector zero;
+        
+        // Interpolate the B-vector in the x-direction...
+        bxtemp1 = LinearInterpolate(selected[0].second.GetElem(0), selected[4].second.GetElem(0), selected[0].first.GetElem(0), selected[4].first.GetElem(0), point.GetElem(0));
+        bxtemp2 = LinearInterpolate(selected[1].second.GetElem(0), selected[5].second.GetElem(0), selected[1].first.GetElem(0), selected[5].first.GetElem(0), point.GetElem(0));
+        bxtemp3 = LinearInterpolate(selected[2].second.GetElem(0), selected[6].second.GetElem(0), selected[2].first.GetElem(0), selected[6].first.GetElem(0), point.GetElem(0));
+        bxtemp4 = LinearInterpolate(selected[3].second.GetElem(0), selected[7].second.GetElem(0), selected[3].first.GetElem(0), selected[7].first.GetElem(0), point.GetElem(0));
+        // interpolate Bx in x
+        
+        bytemp1 = LinearInterpolate(selected[0].second.GetElem(1), selected[4].second.GetElem(1), selected[0].first.GetElem(0), selected[4].first.GetElem(0), point.GetElem(0));
+        bytemp2 = LinearInterpolate(selected[1].second.GetElem(1), selected[5].second.GetElem(1), selected[1].first.GetElem(0), selected[5].first.GetElem(0), point.GetElem(0));
+        bytemp3 = LinearInterpolate(selected[2].second.GetElem(1), selected[6].second.GetElem(1), selected[2].first.GetElem(0), selected[6].first.GetElem(0), point.GetElem(0));
+        bytemp4 = LinearInterpolate(selected[3].second.GetElem(1), selected[7].second.GetElem(1), selected[3].first.GetElem(0), selected[7].first.GetElem(0), point.GetElem(0));
+        //interpolate By in x
+        
+        bztemp1 = LinearInterpolate(selected[0].second.GetElem(2), selected[4].second.GetElem(2), selected[0].first.GetElem(0), selected[4].first.GetElem(0), point.GetElem(0));
+        bztemp2 = LinearInterpolate(selected[1].second.GetElem(2), selected[5].second.GetElem(2), selected[1].first.GetElem(0), selected[5].first.GetElem(0), point.GetElem(0));
+        bztemp3 = LinearInterpolate(selected[2].second.GetElem(2), selected[6].second.GetElem(2), selected[2].first.GetElem(0), selected[6].first.GetElem(0), point.GetElem(0));
+        bztemp4 = LinearInterpolate(selected[3].second.GetElem(2), selected[7].second.GetElem(2), selected[3].first.GetElem(0), selected[7].first.GetElem(0), point.GetElem(0));
+        // interpolate Bz in x
+        
+        // Now interpolate in the y-direction...
+        bxtemp5 = LinearInterpolate(bxtemp1, bxtemp2, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
+        bxtemp6 = LinearInterpolate(bxtemp3, bxtemp4, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
 
-    bytemp5 = LinearInterpolate(bytemp1, bytemp2, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
-    bytemp6 = LinearInterpolate(bytemp3, bytemp4, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
+        bytemp5 = LinearInterpolate(bytemp1, bytemp2, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
+        bytemp6 = LinearInterpolate(bytemp3, bytemp4, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
+        
+        bztemp5 = LinearInterpolate(bztemp1, bztemp2, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
+        bztemp6 = LinearInterpolate(bztemp3, bztemp4, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
+        
+        // Finally in the z-direction
+        btx = LinearInterpolate(bxtemp5, bxtemp6, selected[0].first.GetElem(2), selected[2].first.GetElem(2), point.GetElem(2));
+        bty = LinearInterpolate(bytemp5, bytemp6, selected[0].first.GetElem(2), selected[2].first.GetElem(2), point.GetElem(2));
+        btz = LinearInterpolate(bztemp5, bztemp6, selected[0].first.GetElem(2), selected[2].first.GetElem(2), point.GetElem(2));
+        
+        ThreeVector rval(btx, bty, btz);
+        return rval;
+    }
     
-    bztemp5 = LinearInterpolate(bztemp1, bztemp2, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
-    bztemp6 = LinearInterpolate(bztemp3, bztemp4, selected[0].first.GetElem(1), selected[1].first.GetElem(1), point.GetElem(1));
-    
-    // Finally in the z-direction
-    btx = LinearInterpolate(bxtemp5, bxtemp6, selected[0].first.GetElem(2), selected[2].first.GetElem(2), point.GetElem(2));
-    bty = LinearInterpolate(bytemp5, bytemp6, selected[0].first.GetElem(2), selected[2].first.GetElem(2), point.GetElem(2));
-    btz = LinearInterpolate(bztemp5, bztemp6, selected[0].first.GetElem(2), selected[2].first.GetElem(2), point.GetElem(2));
-    
-    ThreeVector rval(btx, bty, btz);
-    
-    std::cerr << rval << std::endl;
+    ThreeVector rval;
     return rval;
+    
 }
 
 

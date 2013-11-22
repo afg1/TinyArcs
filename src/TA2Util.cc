@@ -213,14 +213,16 @@ void tau::TrackingStep(tau::ThreadArgs* arg)
     vr = Fu*(r*omega*sin(theta)) + vperpu*(r*omega*cos(theta)) + vpar;
 
     long double endA(0), startA(0);
+    bool eligibleForNR(false);
     ThreeVector normal;
     ThreeVector planePoint;
-    if(tau::GetInMagnet(x0, magnets))
+    if(tau::GetInMagnet(x0, magnets) && tau::EligibleForNR(x0, magnets))
     {
         endA = tau::GetEndA(x0, magnets);
         startA = tau::GetStartA(x0, magnets);
         normal = tau::GetNormal(x0, magnets);
         planePoint = tau::GetPlanePoint(x0, magnets);
+        eligibleForNR = true;
     }
     long double phi0 = std::atan2(x0.GetElem(1), x0.GetElem(0));// By trial and error, this ends up right
     if(phi0 < 0)
@@ -233,7 +235,7 @@ void tau::TrackingStep(tau::ThreadArgs* arg)
     long double deltat(0);
     int niter(0);
     // Newton Raphston doesn't work yet...
-    if(phi0 + theta > endA  && !arg->lastStep)
+    if(phi0 + theta > endA  && !arg->lastStep && eligibleForNR)
     {
         ThreeVector x1 = x0 + Fu*(r-r*cos(thetat)) + vperpu*(r*sin(thetat)) + vpar*t0;
         do
@@ -257,7 +259,7 @@ void tau::TrackingStep(tau::ThreadArgs* arg)
         arg->res->push_back(endpair);
         return;
     }
-    else if(phi0 + theta < startA  && !arg->lastStep)
+    else if(phi0 + theta < startA  && !arg->lastStep && eligibleForNR)
     {
         ThreeVector x1 = x0 + Fu*(r-r*cos(thetat)) + vperpu*(r*sin(thetat)) + vpar*t0;
         do
@@ -354,6 +356,21 @@ bool tau::GetInMagnet(ThreeVector x, std::vector<magnet*> magnets)
     }
     return false;
 }
+
+bool tau::EligibleForNR(ThreeVector x, std::vector<magnet*> magnets)
+{
+    std::vector<magnet*>::iterator curr;
+    for(curr = magnets.begin(); curr != magnets.end(); ++curr)
+    {
+        if((*curr)->InMagnet(x))
+        {
+            return (*curr)->Eligible();
+        }
+    }
+    return false;
+}
+
+
 
 void tau::GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc, long double granular)
 {
