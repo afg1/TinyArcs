@@ -7,7 +7,7 @@ find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
 #find_package(ROOT)
 
-include_directories("include" ${Boost_INCLUDE_DIR} "/home/andrew/phd/Dev/ApolloLibrary/include/")
+include_directories("include" ${Boost_INCLUDE_DIR} )
 
 set(CMAKE_CXX_FLAGS ${Boost_CFLAGS})
 
@@ -15,5 +15,5 @@ file(GLOB sources src/*.cc)
 
 
 add_executable(TA2 Tiny2.cc ${sources})
-target_link_libraries(TA2 ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} "/Users/andrew/libs/libAPL.dylib")
+target_link_libraries(TA2 ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
