@@ -26,8 +26,11 @@ class ThreeVector
         long double Magnitude();
         ThreeVector Normalise();
     
+        void BinaryWriteToStream(std::ostream &os);
+    
         // Overload a whole bunch of operators!
         friend std::ostream& operator<<(std::ostream &os, const ThreeVector& v);//
+    
         ThreeVector& operator=(const ThreeVector& rhs);// done?
         bool operator==(const ThreeVector& rhs) const;//done?
         bool operator!=(const ThreeVector& rhs) const;//

@@ -29,7 +29,7 @@ HardEdgedArcDipole::HardEdgedArcDipole(std::string namei, long double inner, lon
     pi = boost::math::constants::pi<long double>();
     B0 = Bvect;
     centre = cent;
-    
+
     innerR = inner;
     outerR = outer;
     startA = start;
@@ -37,13 +37,14 @@ HardEdgedArcDipole::HardEdgedArcDipole(std::string namei, long double inner, lon
     endA = end;
     name = namei;
     gap = gapi;
+
+        exit_normal.SetElem(0, -sin(endA));
+        exit_normal.SetElem(1, cos(endA));
+        exit_normal.SetElem(2, 0.0);
+        exit_plane_point.SetElem(0,midR*cos(endA));
+        exit_plane_point.SetElem(1, midR*sin(endA));
+        exit_plane_point.SetElem(2, gap/2);
     
-     exit_normal.SetElem(0, -sin(endA));
-     exit_normal.SetElem(1, cos(endA));
-     exit_normal.SetElem(2, 0.0);
-     exit_plane_point.SetElem(0,midR*cos(endA));
-     exit_plane_point.SetElem(1, midR*sin(endA));
-     exit_plane_point.SetElem(2, gap/2);
 }
 
 HardEdgedArcDipole::~HardEdgedArcDipole()
@@ -54,16 +55,37 @@ HardEdgedArcDipole::~HardEdgedArcDipole()
 bool HardEdgedArcDipole::InMagnet(ThreeVector point)
 {
     point -= centre;
-    long double theta = std::atan2(point.GetElem(1), point.GetElem(0));
+    long double theta;
+    long double rp;
+    long double zeff;
+//    if(plane == "xy")
+//    {
+        theta = std::atan2(point.GetElem(1), point.GetElem(0));
+        rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
+        zeff = point.GetElem(2);
+//    }
+//    else if(plane == "xz")
+//    {
+//        theta = std::atan2(point.GetElem(2), point.GetElem(0));
+//        rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(2), 2));
+//        zeff = point.GetElem(1);
+//    }
+//    else if(plane == "yz")
+//    {
+//        theta = std::atan2(point.GetElem(2), point.GetElem(1));
+//        rp = std::sqrt(std::pow(point.GetElem(1), 2) + std::pow(point.GetElem(2), 2));
+//        zeff = point.GetElem(0);
+//    }
     if(theta < 0)
     {
         theta += 2*pi;
     }
-    long double rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
-    long double z = point.GetElem(2);
     
-    if((z <= gap/2 && z >= -gap/2) && ((theta >= startA && theta <= endA) || (theta <= startA && theta >= endA)) && (rp >= innerR && rp <= outerR))
+    
+    
+    if((zeff <= gap/2 && zeff >= -gap/2) && ((theta >= startA && theta <= endA) || (theta <= startA && theta >= endA)) && (rp >= innerR && rp <= outerR))
     {
+
         return true;
     }
     else
@@ -75,15 +97,18 @@ bool HardEdgedArcDipole::InMagnet(ThreeVector point)
 ThreeVector HardEdgedArcDipole::B(ThreeVector point)
 {
     point -= centre;
-    long double theta = std::atan2(point.GetElem(1), point.GetElem(0));
-    if(theta < 0)
+    long double theta;
+    long double rp;
+    long double zeff;
+        theta = std::atan2(point.GetElem(1), point.GetElem(0));
+        rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
+        zeff = point.GetElem(2);
+        if(theta < 0)
     {
         theta += 2*pi;
     }
-    long double rp = std::sqrt(std::pow(point.GetElem(0), 2) + std::pow(point.GetElem(1), 2));
-    long double z = point.GetElem(2);
     
-    if((z <= gap/2 && z >= -gap/2) && ((theta >= startA && theta <= endA) || (theta <= startA && theta >= endA)) && (rp >= innerR && rp <= outerR))
+    if((zeff <= gap/2 && zeff >= -gap/2) && ((theta >= startA && theta <= endA) || (theta <= startA && theta >= endA)) && (rp >= innerR && rp <= outerR))
     {
         return B0;
     }
@@ -192,7 +217,6 @@ GeneralMagnetFromMap::GeneralMagnetFromMap(std::string namei, long double extXi,
     extY = extYi;
     extZ = extZi;
     centre = cent;
-    
     std::ifstream map;
     map.open(mapfile.c_str(), std::ios::binary);
     double tx(0), ty(0), tz(0);
@@ -224,6 +248,11 @@ GeneralMagnetFromMap::GeneralMagnetFromMap(std::string namei, long double extXi,
             ThreeVector Bi(tx,ty,tz);
             mapData.push_back(std::make_pair(x, Bi));
         }
+        std::cerr << "Finished reading map data" << std::endl;
+    }
+    else
+    {
+        std::cerr << "Failed to open map..." << std::endl;
     }
     long double testx(mapData[0].first.GetElem(0));
     long double testy(mapData[0].first.GetElem(1));
@@ -285,13 +314,20 @@ GeneralMagnetFromMap::GeneralMagnetFromMap(std::string namei, long double extXi,
             maxz = curr->first.GetElem(2);
         }
         
+        std::cerr << minz << "\t" << maxz << std::endl;
+        
+        
         nx = int(ceil((maxx - minx)/dx)) + 1;
         ny = int(ceil((maxy - miny)/dy)) + 1;
         nz = int(ceil((maxz - minz)/dz)) + 1;
         
-        
     }
-    std::cerr << "Debug: magnet constructed" << std::endl;
+    if(maxz == minz)
+    {
+    	nz =0;
+    }
+	std::cerr << "These are how many voxels I think there are: " << nx << "\t" << ny << "\t" << nz << std::endl;
+
 }
 
 
@@ -364,17 +400,19 @@ ThreeVector GeneralMagnetFromMap::TriLinearInterpolate(ThreeVector point)
     jy = int(ceil((point.GetElem(1) - miny)/dy));// Find the index of the lower corner of the voxel!
     kz = int(ceil((point.GetElem(2) - minz)/dz));
 
-    if(ix < nx-1)// Must have stepped outside the region we have a field map for... return zero
+    if(ix < nx-1 && ((ix+1)*ny*nz + (jy+1)*nz + (kz+1)) < nx*ny*nz )// Must have stepped outside the region we have a field map for... return zero
     {
-        selected.push_back(mapData[ix*ny*nz + jy*nz + kz]);
-        selected.push_back(mapData[ix*ny*nz + (jy+1)*nz + kz]);
-        selected.push_back(mapData[ix*ny*nz + jy*nz + (kz+1)]);
-        selected.push_back(mapData[ix*ny*nz + (jy+1)*nz + (kz+1)]);
+        selected.push_back(mapData.at(ix*ny*nz + jy*nz + kz));
+        selected.push_back(mapData.at(ix*ny*nz + (jy+1)*nz + kz));
+        selected.push_back(mapData.at(ix*ny*nz + jy*nz + (kz+1)));
+        selected.push_back(mapData.at(ix*ny*nz + (jy+1)*nz + (kz+1)));
         
-        selected.push_back(mapData[(ix+1)*ny*nz + jy*nz + kz]);
-        selected.push_back(mapData[(ix+1)*ny*nz + (jy+1)*nz + kz]);
-        selected.push_back(mapData[(ix+1)*ny*nz + jy*nz + (kz+1)]);
-        selected.push_back(mapData[(ix+1)*ny*nz + (jy+1)*nz + (kz+1)]);// The order of these is very particular!
+        selected.push_back(mapData.at((ix+1)*ny*nz + jy*nz + kz));
+        selected.push_back(mapData.at((ix+1)*ny*nz + (jy+1)*nz + kz));
+        selected.push_back(mapData.at((ix+1)*ny*nz + jy*nz + (kz+1)));
+        selected.push_back(mapData.at((ix+1)*ny*nz + (jy+1)*nz + (kz+1)));// The order of these is very particular!
+        
+        std::cerr << "Got the corners!" << std::endl;
         
         std::vector<std::pair<ThreeVector, ThreeVector> >::iterator curr;
         std::vector<ThreeVector> Btest;
@@ -417,6 +455,7 @@ ThreeVector GeneralMagnetFromMap::TriLinearInterpolate(ThreeVector point)
         ThreeVector rval(btx, bty, btz);
         return rval;
     }
+    std::cerr << "Returning zero from the interpolation..." << std::endl;
     
     ThreeVector rval;
     return rval;

@@ -21,7 +21,7 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
     // Set member data and some utility bits
     pi = boost::math::constants::pi<long double>();
     configGood = true;
-    std::string line;
+    std::string line, plane;
     
     std::ifstream config(fname);// Open the config file
     if(config.is_open())
@@ -157,7 +157,6 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                 {
                     std::vector<std::string> linesplit;
                     boost::split(linesplit, line, boost::is_any_of(", "));
-                    
                     if(linesplit[0].compare("EXTX") == 0)
                     {
                         extX = static_cast<long double>(atof(linesplit[1].c_str()));
@@ -247,6 +246,10 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                 z = static_cast<long double>(atof(linesplit[3].c_str()));
                 vi = new ThreeVector(x,y,z);
                 configPhaseSpacevi.push_back(*vi);
+            }
+            else if(linesplit[0].compare("OUTLOC") == 0)
+            {
+                outloc = linesplit[1];
             }
             else
             {

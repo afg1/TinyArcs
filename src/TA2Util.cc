@@ -32,6 +32,7 @@ void *tau::consumer(void* arg)
 This function will do the actual traking
 */
     tau::ThreadArgs* input = (tau::ThreadArgs*)arg;
+    
     pthread_mutex_lock(&getPartMutex);
     TA2ConfigParser* conf = input->conf;
     input->initPair = conf->GetParticle();
@@ -113,11 +114,13 @@ void tau::RunTracking(TA2ConfigParser* conf, std::vector<std::vector<std::pair<T
     std::stringstream fname;
     for(int i=0; i< npart; ++i)
     {
-        fname << "particle_" << i << ".txt";
-        std::ofstream out(fname.str().c_str());
+        fname << conf->GetOutloc() << "particle_" << i << ".txt";
+        std::ofstream out(fname.str().c_str(), std::ios::binary);
         for(int j=0; j< t_args[i]->res->size() ; ++j)
         {
-            out << std::setprecision(30) << t_args[i]->res->operator[](j).first << "\t" << t_args[i]->res->operator[](j).second << std::endl;
+            t_args[i]->res->operator[](j).first.BinaryWriteToStream(out);
+            t_args[i]->res->operator[](j).second.BinaryWriteToStream(out);
+//            out << std::setprecision(30) << t_args[i]->res->operator[](j).first << "\t" << t_args[i]->res->operator[](j).second << std::endl;
         }
         out.close();
         fname.str("");

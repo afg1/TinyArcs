@@ -108,6 +108,14 @@ std::ostream& operator<<(std::ostream& os, const ThreeVector& v)
   return os;
 }
 
+void ThreeVector::BinaryWriteToStream(std::ostream&os)
+{
+    os.write((char*)&elements[0], sizeof(elements[0]));
+    os.write((char*)&elements[1], sizeof(elements[1]));
+    os.write((char*)&elements[2], sizeof(elements[2]));
+}
+
+
 void ThreeVector::swap(ThreeVector& first, ThreeVector& second)
 {
     using std::swap;

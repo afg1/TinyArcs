@@ -34,11 +34,12 @@ std::pair<ThreeVector, ThreeVector> TAPhasespace::GetParticle()
 {
     long double tx(0), ty(0), tz(0);
     std::ifstream phase(fname.c_str(), std::ios::binary);
+    phase.seekg(position);
     if(phase.is_open())
     {
         char* buffer = new char[6*sizeof(long double)];// buffer for a set of threads worth of particles!
         int offset(0);
-        while(phase.tellg() != len)
+        while(position != len)
         {
             phase.read(reinterpret_cast<char*>(buffer),6*sizeof(long double));
             offset = 0;

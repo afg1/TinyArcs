@@ -23,6 +23,7 @@ class TA2ConfigParser
         std::string GetBmapOutloc(){return outloc;}
         std::pair<ThreeVector, ThreeVector> GetParticle();
         int GetNpart();
+        std::string GetOutloc(){return outloc;}
     
     private:
         // Things needed to construct a magnet
@@ -56,6 +57,7 @@ class TA2ConfigParser
         std::vector<ThreeVector> configPhaseSpacexi;
         std::vector<ThreeVector> configPhaseSpacevi;
         std::vector<magnet*> magnets;
+    
     
         // Constants and things
         bool configGood;
