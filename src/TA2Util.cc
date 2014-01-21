@@ -107,7 +107,8 @@ void tau::RunTracking(TA2ConfigParser* conf, std::vector<std::vector<std::pair<T
             pthread_join(jobs[i], NULL);
         }
     }
-
+    
+    std::cout << "About to output data..." << std::endl;
     std::stringstream fname;
     for(int i=0; i< npart; ++i)
     {

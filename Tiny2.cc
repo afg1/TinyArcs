@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
             reslist.push_back(resn[i]);
         }
         tau::RunTracking(&config, reslist);
+        cout << "Tracking finished!" << endl;
     }
     else
     {
