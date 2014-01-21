@@ -21,6 +21,7 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
     // Set member data and some utility bits
     pi = boost::math::constants::pi<long double>();
     configGood = true;
+    genBmap = false;
     std::string line, plane;
     
     std::ifstream config(fname);// Open the config file
