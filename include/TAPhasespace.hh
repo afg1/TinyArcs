@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <cstdlib>
+#include <cstring>
 
 #include "ThreeVector.hh"
 
