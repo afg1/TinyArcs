@@ -14,9 +14,6 @@
 #include <pthread.h>
 #include <boost/math/constants/constants.hpp>
 
-
-#include "QueueJumper.hh"
-
 #include "TAPhasespace.hh"
 #include "TA2ConfigParse.hh"
 #include "TA2Util.hh"
