@@ -94,7 +94,7 @@ bool HardEdgedArcDipole::InMagnet(ThreeVector point)
     }
 }
 
-ThreeVector HardEdgedArcDipole::B(ThreeVector point)
+ThreeVector HardEdgedArcDipole::B(ThreeVector point, int n)
 {
     point -= centre;
     long double theta;
@@ -175,7 +175,7 @@ bool HardEdged225Spectrometer::InMagnet(ThreeVector point)
     }
 }
 
-ThreeVector HardEdged225Spectrometer::B(ThreeVector point)
+ThreeVector HardEdged225Spectrometer::B(ThreeVector point, int n)
 {
     point -= centre;
     long double theta = std::atan2(point.GetElem(1), point.GetElem(0));// By trial and error, this ends up right
@@ -314,9 +314,6 @@ GeneralMagnetFromMap::GeneralMagnetFromMap(std::string namei, long double extXi,
             maxz = curr->first.GetElem(2);
         }
         
-        std::cerr << minz << "\t" << maxz << std::endl;
-        
-        
         nx = int(ceil((maxx - minx)/dx)) + 1;
         ny = int(ceil((maxy - miny)/dy)) + 1;
         nz = int(ceil((maxz - minz)/dz)) + 1;
@@ -331,7 +328,7 @@ GeneralMagnetFromMap::GeneralMagnetFromMap(std::string namei, long double extXi,
 }
 
 
-ThreeVector GeneralMagnetFromMap::B(ThreeVector point)
+ThreeVector GeneralMagnetFromMap::B(ThreeVector point, int n)
 {
     ThreeVector rval = TriLinearInterpolate(point);
     return rval;

@@ -20,6 +20,7 @@ namespace tau
         std::pair<ThreeVector, ThreeVector> initPair;
         bool lastStep;
         bool firstStep;
+        int partNo;
         
     } ThreadArgs;
     
@@ -30,14 +31,14 @@ namespace tau
     
     void RunTracking(TA2ConfigParser* conf, std::vector<std::vector<std::pair<ThreeVector, ThreeVector> >* >& reslist);
     
-    void WriteTrackingData(std::vector<std::pair<ThreeVector, ThreeVector> >& data, std::string outloc);
+    void WriteTrackingData(std::vector<magnet*> magnets);
     
     
     long double gammaFromE(long double T);
     long double betaFromE(long double T);
     long double gammaFromV(long double V);
     long double betaFromV(long double V);
-    ThreeVector GenerateBmap(ThreeVector x, std::vector<magnet*> magnets);
+    ThreeVector GenerateBmap(ThreeVector x, std::vector<magnet*> magnets, int);
     long double GetEndA(ThreeVector x, std::vector<magnet*> magnets);
     long double GetStartA(ThreeVector x, std::vector<magnet*> magnets);
     ThreeVector GetNormal(ThreeVector x, std::vector<magnet*> magnets);
@@ -45,7 +46,9 @@ namespace tau
     bool GetInMagnet(ThreeVector x, std::vector<magnet*> magnets);
     bool EligibleForNR(ThreeVector x, std::vector<magnet*> magnets);
     
-    void GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc, long double granularity);
+    void GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc, long double granularity, int ncores);
+    
+    void GenerateElemMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc, int nbins, int ncores);
     
 };
 #endif

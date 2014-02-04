@@ -8,16 +8,18 @@
 class magnet
 {
     public:
-        virtual ThreeVector B(ThreeVector point)=0;
+        virtual ThreeVector B(ThreeVector point, int n)=0;
         virtual bool InMagnet(ThreeVector point)=0;
         virtual ThreeVector GetNormal()=0;
         virtual ThreeVector GetPlanePoint()=0;
         virtual long double GetEndA()=0;
         virtual long double GetStartA()=0;
         virtual bool Eligible()=0;
+        virtual std::string GetName()=0;
         // Note these two aren't virtual, all inheriting classes get them!
         long double betaFromV(long double V);
         long double gammaFromV(long double V);
+        virtual bool IsDetector(){return false;}
 
 };
 
@@ -27,13 +29,14 @@ class HardEdgedArcDipole : public magnet
     public:
         HardEdgedArcDipole(std::string , long double , long double, long double, long double, long double, ThreeVector, ThreeVector);
         ~HardEdgedArcDipole();
-        virtual ThreeVector B(ThreeVector point);
+        virtual ThreeVector B(ThreeVector point, int n);
         ThreeVector GetNormal(){return exit_normal;}
         ThreeVector GetPlanePoint(){return exit_plane_point;}
         long double GetEndA(){return endA;}
         long double GetStartA(){return startA;}
         bool InMagnet(ThreeVector point);
         bool Eligible(){return true;}
+        std::string GetName(){return name;}
     
     private:
         long double innerR;
@@ -59,13 +62,15 @@ class HardEdged225Spectrometer : public magnet
         HardEdged225Spectrometer(std::string , long double , long double, long double, long double, long double, ThreeVector, ThreeVector, long double, long double);
         ~HardEdged225Spectrometer();
         long double Hr(long double rp, long double z);
-        virtual ThreeVector B(ThreeVector point);
+        virtual ThreeVector B(ThreeVector point, int n);
         ThreeVector GetNormal(){return exit_normal;}
         ThreeVector GetPlanePoint(){return exit_plane_point;}
         long double GetEndA(){return endA;}
         long double GetStartA(){return startA;}
         bool InMagnet(ThreeVector point);
         bool Eligible(){return true;}
+        std::string GetName(){return name;}
+
     
     private:
         long double innerR;
@@ -93,7 +98,7 @@ class HardEdgedGeneralDipole : public magnet
     public:
         HardEdgedGeneralDipole(std::string);
         ~HardEdgedGeneralDipole();
-        ThreeVector B(ThreeVector point);
+        ThreeVector B(ThreeVector point, int n);
     
         bool InMagnet(ThreeVector point);
         bool Eligible(){return true;}
@@ -101,6 +106,8 @@ class HardEdgedGeneralDipole : public magnet
         ThreeVector GetPlanePoint();
         long double GetEndA();
         long double GetStartA();
+        std::string GetName(){return name;}
+
     
     private:
         long double innerR;
@@ -125,13 +132,15 @@ class GeneralMagnetFromMap : public magnet
         GeneralMagnetFromMap(std::string, long double, long double, long double, ThreeVector, std::string);
         ~GeneralMagnetFromMap(){}
     
-        ThreeVector B(ThreeVector point);
+        ThreeVector B(ThreeVector point, int n);
         bool InMagnet(ThreeVector point);
         bool Eligible(){return false;}
         ThreeVector GetNormal();
         ThreeVector GetPlanePoint();
         long double GetEndA();
         long double GetStartA();
+        std::string GetName(){return name;}
+
     
         long double LinearInterpolate(long double y0, long double y1, long double x0, long double x1, long double x);
         ThreeVector TriLinearInterpolate(ThreeVector point);
@@ -166,9 +175,35 @@ class GeneralMagnetFromMap : public magnet
         int nz;
 };
 
+class DetectorMagnet : public magnet
+{
+    public:
+        DetectorMagnet(std::string , std::string, ThreeVector, ThreeVector);
+        ~DetectorMagnet();
+        virtual ThreeVector B(ThreeVector point, int n);
+        ThreeVector GetNormal();
+        ThreeVector GetPlanePoint();
+        long double GetEndA();
+        long double GetStartA();
+        bool InMagnet(ThreeVector point);
+        bool Eligible(){return false;}
+        std::string GetName(){return name;}
+        bool IsDetector(){return true;}
+//        int GetNHits(){return hits.size();}
+        void WriteHits();
+        void SetNpart(int nparti);
 
+    
+    private:
+        void RegisterHit(ThreeVector , int );
+    
+        ThreeVector centre;
+        ThreeVector extent;
+        std::string name;
+        std::string outloc;
+        std::vector< std::vector<ThreeVector> > hits;
+        int npart;
 
-
-
+};
 
 #endif

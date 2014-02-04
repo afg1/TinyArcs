@@ -24,6 +24,9 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
     genBmap = false;
     std::string line, plane;
     
+    bool detectorsPresent(false);
+    std::vector<DetectorMagnet*> dets;
+    
     std::ifstream config(fname);// Open the config file
     if(config.is_open())
     {
@@ -195,6 +198,47 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
                 magnet* GenFieldMappd = new GeneralMagnetFromMap(name, extX, extY, extZ, *centre, mapfile);
                 magnets.push_back(GenFieldMappd);
             }// End General field mapped element
+            else if(line.compare("DETECTOR") == 0)
+            {
+                while(std::getline(config, line) && line.compare("END") != 0)
+                {
+                    std::vector<std::string> linesplit;
+                    boost::split(linesplit, line, boost::is_any_of(", "));
+                    if(linesplit[0].compare("EXT") == 0)
+                    {
+                        long double x(0), y(0), z(0);
+                        x = static_cast<long double>(atof(linesplit[1].c_str()));
+                        y = static_cast<long double>(atof(linesplit[2].c_str()));
+                        z = static_cast<long double>(atof(linesplit[3].c_str()));
+                        ext_det = new ThreeVector(x,y,z);
+                    }
+                    else if(linesplit[0].compare("OUTLOC") == 0)
+                    {
+                        outloc_det = linesplit[1];
+                    }
+                    else if(linesplit[0].compare("CENTRE") == 0)
+                    {
+                        long double x(0), y(0), z(0);
+                        x = static_cast<long double>(atof(linesplit[1].c_str()));
+                        y = static_cast<long double>(atof(linesplit[2].c_str()));
+                        z = static_cast<long double>(atof(linesplit[3].c_str()));
+                        centre = new ThreeVector(x,y,z);
+                    }
+                    else if(linesplit[0].compare("NAME") == 0)
+                    {
+                        name = linesplit[1];
+                    }
+                    else
+                    {
+                       continue;
+                    }
+                    
+                }
+                magnet* Detector = new DetectorMagnet(name, outloc_det, *centre, *ext_det);
+                magnets.push_back(Detector);
+                dets.push_back((DetectorMagnet*)Detector);
+                detectorsPresent = true;
+            }// End DetectorMagnet
             else if(linesplit[0].compare("PHASESPACE") == 0)
             {
                 phasespace = new TAPhasespace(linesplit[1]);// This is all we will do with it now, read in later...
@@ -252,12 +296,28 @@ TA2ConfigParser::TA2ConfigParser(const char* fname)// Use c-style string soI don
             {
                 outloc = linesplit[1];
             }
+            else if(linesplit[0].compare("ELEMMAP") == 0)
+            {
+                elements = true;
+                nbins = atoi(linesplit[1].c_str());
+                elmapoutloc = linesplit[2];
+
+            }
             else
             {
                 continue;
             }
         }// Close on while for config file
     }// Close config read
+    
+    if(detectorsPresent)
+    {
+        std::vector<DetectorMagnet*>::iterator curr;
+        for(curr=dets.begin(); curr!=dets.end(); ++curr)// By now, we should know how many particles to expect, so we tell the detectors
+        {
+            (*curr)->SetNpart(GetNpart());
+        }
+    }
     config.close();
 }
 

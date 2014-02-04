@@ -24,6 +24,9 @@ class TA2ConfigParser
         std::pair<ThreeVector, ThreeVector> GetParticle();
         int GetNpart();
         std::string GetOutloc(){return outloc;}
+        std::string GetOutlocForElmap(){return elmapoutloc;}
+        bool MakeElemMap(){return elements;}
+        int GetNbins(){return nbins;}
     
     private:
         // Things needed to construct a magnet
@@ -41,7 +44,9 @@ class TA2ConfigParser
         std::string mapfile;
         ThreeVector* centre;
         ThreeVector* B0;
+        ThreeVector* ext_det;
         std::string name;
+        std::string outloc_det;
     
     
     
@@ -66,6 +71,10 @@ class TA2ConfigParser
         long double granularity;
         long double pi;
         std::string outloc;
+        bool elements;
+        int nbins;
+        std::string elmapoutloc;
+
 
 
 

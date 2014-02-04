@@ -18,6 +18,8 @@
 #include "TA2ConfigParse.hh"
 #include "TA2Util.hh"
 #include "Magnets.hh"
+#include "Histogramming.hh"
+#include <omp.h>
 
 pthread_mutex_t getPartMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t threadWaitMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -48,13 +50,37 @@ This function will do the actual traking
     pthread_exit(NULL);
 }
 
-
+void tau::WriteTrackingData(std::vector<magnet*> magnets)
+{
+    std::vector<magnet*>::iterator curr;
+    for(curr = magnets.begin(); curr != magnets.end(); ++curr)
+    {
+        if((*curr)->IsDetector())
+        {
+            // Means its safe to cast to detector type...
+            DetectorMagnet* mag = (DetectorMagnet*)(*curr);
+            mag->WriteHits();
+        }
+    }
+}
 
 
 void tau::RunTracking(TA2ConfigParser* conf, std::vector<std::vector<std::pair<ThreeVector, ThreeVector> >* >& reslist)
 {
     
     const int npart = conf->GetNpart();
+    std::vector<magnet*>::iterator curr;
+    for(curr = conf->GetMagnets().begin(); curr != conf->GetMagnets().end(); ++curr)
+    {
+        if((*curr)->IsDetector())
+        {
+            // Means its safe to cast to detector type...
+            DetectorMagnet* mag = (DetectorMagnet*)(*curr);
+            mag->SetNpart(npart);
+        }
+    }
+
+
     pthread_t jobs[npart];// array of pthreads, which are what I'm calling "jobs"
     tau::ThreadArgs* t_args[npart];
     // Need to use struct to pass args into a pthread
@@ -66,6 +92,7 @@ void tau::RunTracking(TA2ConfigParser* conf, std::vector<std::vector<std::pair<T
         t_args[i]->res = reslist[i];
         t_args[i]->lastStep = false;
         t_args[i]->firstStep = false;
+        t_args[i]->partNo = i;
         
     }
     if(npart > conf->GetNcores())
@@ -122,6 +149,8 @@ void tau::RunTracking(TA2ConfigParser* conf, std::vector<std::vector<std::pair<T
         }
         out.close();
         fname.str("");
+        WriteTrackingData(conf->GetMagnets());
+        
     }
 }
 
@@ -154,13 +183,13 @@ long double tau::betaFromV(long double V)
     return b;
 }
 
-ThreeVector tau::GenerateBmap(ThreeVector x, std::vector<magnet*> magnets)
+ThreeVector tau::GenerateBmap(ThreeVector x, std::vector<magnet*> magnets, int n)
 {
     ThreeVector Bret(0.0, 0.0, 0.0);
     std::vector<magnet*>::iterator curr;
     for(curr = magnets.begin(); curr != magnets.end(); ++curr)
     {
-        Bret += (*curr)->B(x);
+        Bret += (*curr)->B(x, n);// This is a kludge, I need to figure out what to actually put here when I'm awake
     }
     return Bret;
 }
@@ -181,8 +210,7 @@ void tau::TrackingStep(tau::ThreadArgs* arg)
     
     ThreeVector x = x0 + (v0*dt/2);
     
-    
-    ThreeVector B = tau::GenerateBmap(x, magnets);
+    ThreeVector B = tau::GenerateBmap(x, magnets, arg->partNo);
     if(B == zero)
     {
         std::pair<ThreeVector, ThreeVector> endpair(x, v0);
@@ -373,7 +401,7 @@ bool tau::EligibleForNR(ThreeVector x, std::vector<magnet*> magnets)
 
 
 
-void tau::GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc, long double granular)
+void tau::GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc, long double granular, int ncores)
 {
     ThreeVector rp;
     ThreeVector Bp(0.0, 0.0, 1.0);
@@ -392,7 +420,7 @@ void tau::GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std
                     rp.SetElem(0, xp);
                     rp.SetElem(1, yp);
                     rp.SetElem(2, zp);
-                    Bp = tau::GenerateBmap(rp, magnets);
+                    Bp = tau::GenerateBmap(rp, magnets, 0);
                     fieldPoint[0] = xp;
                     fieldPoint[1] = yp;
                     fieldPoint[2] = zp;
@@ -409,5 +437,64 @@ void tau::GenerateFieldMap(std::vector<magnet*> magnets, ThreeVector limits, std
         std::cerr << "Unable to open file for Bmap output" << std::endl;
     }
 }
+
+void tau::GenerateElemMap(std::vector<magnet*> magnets, ThreeVector limits, std::string outloc, int nbins, int ncores)
+{
+    ThreeVector rp;
+    ThreeVector Bp(0.0, 0.0, 0.0);
+    long double xp(-limits.GetElem(0)), yp(-limits.GetElem(1)), zp(0.0);//-limits.GetElem(2));
+    std::vector<long double> xpv;
+    std::vector<long double> ypv;
     
+    std::vector<long double>::iterator xpvit;
+    std::vector<long double>::iterator ypvit;
+    
+//    std::vector<long double> zp;
+    long double granular = (-2*xp)/(nbins);
+    Histogram2D* hist = new Histogram2D(nbins+1, nbins+1,-1*limits.GetElem(0), limits.GetElem(0), -1*limits.GetElem(1), limits.GetElem(1) );
+    
+    long double temp(-limits.GetElem(0));
+    for(int i=0; i < nbins+1; i++)
+    {
+        xpv.push_back(temp);
+        temp += granular;
+    }
+    temp = -limits.GetElem(1);
+    for(int i=0; i < nbins+1; i++)
+    {
+        ypv.push_back(temp);
+        temp += granular;
+    }
+    
+    int tid;
+    #pragma omp parallel for num_threads(1) private(i, xpvit, ypvit, tid)
+    for(int i=0; i < nbins+1; i++)
+    {
+        xpvit = xpv.begin() + i;
+        for(int j=0; j < nbins+1; j++)
+        {
+            ypvit = ypv.begin() + j;
+//            for(zp=-1*limits.GetElem(2); zp <= limits.GetElem(2); zp+= granular)
+//            {
+                rp.SetElem(0, *xpvit);
+                rp.SetElem(1, *ypvit);
+                rp.SetElem(2, zp);
+                if(GetInMagnet(rp, magnets))
+                {
+                    hist->Fill(*xpvit, *ypvit, 1.0);
+                }
+                else
+                {
+                    hist->Fill(*xpvit, *ypvit, 0.0);
+                }
+//            }
+        }
+    }
+    hist->Write(outloc);
+}
+
+
+
+
+
 
